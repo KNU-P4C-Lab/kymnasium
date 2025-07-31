@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools >= 80.9.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kymnasium"
+version = "1.0.0"
+dependencies = [
+    "gymnasium >= 1.2.0",
+    "pygame >= 2.6.1",
+    "minigrid >= 3.0.0",
+    "numpy >= 2.3.2",
+    "highway-env >= 1.10.1",
+    "pymunk >= 7.1.0",
+    "rpyc >= 6.0.2"
+]
+authors = [
+    {name = "Woohyeok Choi", email = "woohyeok.choi@kangwon.ac.kr"},
+]
+maintainers = [
+    {name = "Woohyeok Choi", email = "woohyeok.choi@kangwon.ac.kr"}
+]
+readme = "README.md"
+license = "MIT AND (Apache-2.0 OR BSD-2-Clause)"
+requires-python = ">= 3.12"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+]
+
+[project.urls]
+Homepage = "https://knu-p4c-lab.github.io/"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["kymnasium"]
+
