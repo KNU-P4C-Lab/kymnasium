@@ -1,9 +1,14 @@
 import gymnasium as gym
 import kymnasium as kym
+from typing import Any, Dict
 
 
+'''
+kymnasium.Agent를 상속하여
+자신만의 에이전트를 구현
+'''
 class YourAgent(kym.Agent):
-    def act(self, observation: any, info: dict):
+    def act(self, observation: Any, info: Dict):
         pass
 
     @classmethod
@@ -15,20 +20,15 @@ class YourAgent(kym.Agent):
 
 
 def train():
+    '''
+    Grid Crossing 환경은 다음과 같이 생성
+    '''
     env = gym.make(
         id='kymnasium/environment-id-here',
-        render_mode='human', # "human" for display the game; "rgb_array" for background rendering,
-        obs_type='custom', # "custom" for tabular representation of observation; "image" for image representation
-        bgm=True # True for playing background music; False, otherwise
+        render_mode='human', # or "rgb_array"
+        bgm=True # or False
     )
-    agent = YourAgent()
-    done = False
-    observation, info = env.reset()
-
-    while not done:
-        action = agent.act(observation, info)
-        observation, reward, terminated, truncated, info = env.step(action)
-        done = terminated or truncated
-        '''
-        Write some codes to train your agent here.
-        '''
+    '''
+    여기서부터는 이 환경에 대해서 에이전트를 훈련시키는 코드를
+    자유롭게 작성
+    '''

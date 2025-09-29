@@ -19,20 +19,23 @@ pip install kymnasium
 
 ### Implement Your Agent
 To train your own agent, you need to override 'kymnasium.Agent' and implement three methods as below:
+
 ```python
-import kymnasium as kym
+
+from src import kymnasium as kym
+
 
 # Your agent logic goes here
-class YourAgent(kym.Agent): 
+class YourAgent(kym.Agent):
     def act(self, observation: any, info: dict):
         # Replace this with your agent's action selection logic return env.action_space.sample()
         pass
-    
+
     @classmethod
     def load(cls, path: str) -> 'kym.Agent':
         # Load a pre-trained agent
         pass
-    
+
     def save(self, path: str):
         # Save the trained agent
         pass
@@ -74,30 +77,30 @@ agent.save(PATH_AGENT)
 ```
 
 ### Live Evaluation of Your Agent
-```python
-import kymnasium as kym
 
+```python
+
+from src import kymnasium as kym
 
 evaluator = kym.LocalEvaluator(
-    env_id="kymnasium/GridAdventure-FullMaze-26x26-v0", # Environment ID
-    agent=YourAgent.load(PATH_AGENT), # Your trained agent
-    render_mode='human', # 'render_mode' should be 'human' for live evaluation
-    obs_type='custom', # or 'image'
-    bgm=True #  'bgm' should be 'True' for live evaluation
+    env_id="kymnasium/GridAdventure-FullMaze-26x26-v0",  # Environment ID
+    agent=YourAgent.load(PATH_AGENT),  # Your trained agent
+    render_mode='human',  # 'render_mode' should be 'human' for live evaluation
+    obs_type='custom',  # or 'image'
+    bgm=True  # 'bgm' should be 'True' for live evaluation
 )
 
-evaluator.evaluate()
+evaluator.run()
 ```
 
 ## Manual Play
 If you want to manually play the environment, see below:
 ```python
-from kymnasium.grid_adventure import ManualPlayWrapper
-
+from grid_adventure import ManualPlayWrapper
 
 agent = ManualPlayWrapper(
     env_id='kymnasium/GridAdventure-FullMaze-26x26-v0',
-    render_mode='human', #'render_mode' should be 'human' for manual play
+    render_mode='human',  # 'render_mode' should be 'human' for manual play
 )
 agent.play()
 ```

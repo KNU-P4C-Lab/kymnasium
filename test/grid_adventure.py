@@ -1,6 +1,7 @@
-import numpy as np
-from kymnasium.grid_adventure import ManualPlayWrapper
+import random
+from typing import Any, Dict
 import kymnasium as kym
+from kymnasium.grid_adventure import ManualPlayWrapper
 
 
 class RandomAgent(kym.Agent):
@@ -11,33 +12,28 @@ class RandomAgent(kym.Agent):
     def load(cls, path: str) -> 'kym.Agent':
         pass
 
-    def __init__(self) -> None:
-        super().__init__()
-        self.ran = np.random.default_rng(42)
-        self.actions = [0, 1, 2, 3, 4, 5]
-
-    def act(self, observation: any, info: dict):
-        action = self.ran.choice(self.actions)
+    def act(self, observation: Any, info: Dict):
+        action = random.choice([0, 1, 2, 3, 4, 5])
         return action
 
 
-def manual():
+def manual_play():
     agent = ManualPlayWrapper(
-        env_id='kymnasium/GridAdventure-FullMaze-26x26-v0',
+        env_id='kymnasium/GridAdventure-FullMaze-32x32-v0',
         render_mode='human',
+        debug=True
     )
     agent.play()
 
 
-def random():
-    evaluator = kym.LocalEvaluator(
+def random_play():
+    kym.evaluate(
         env_id='kymnasium/GridAdventure-FullMaze-26x26-v0',
         agent=RandomAgent(),
         render_mode='human',
         bgm=True
     )
-    evaluator.evaluate()
 
 
 if __name__ == "__main__":
-    pass
+    manual_play()

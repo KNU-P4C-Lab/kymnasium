@@ -4,15 +4,15 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kymnasium"
-version = "1.0.1"
 dependencies = [
     "gymnasium >= 1.2.0",
     "pygame >= 2.6.1",
     "minigrid >= 3.0.0",
-    "numpy >= 2.3.2",
+    "numpy >= 2.0.2",
     "pymunk >= 7.1.0",
     "rpyc >= 6.0.2"
 ]
+description = "The collection of reinforcement learning environments developed for the Artificial Intelligence course at the Department of Computer Science and Engineering, Kangwon National University."
 authors = [
     {name = "Woohyeok Choi", email = "woohyeok.choi@kangwon.ac.kr"},
 ]
@@ -25,7 +25,12 @@ requires-python = ">= 3.12"
 classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.12",
+    "Intended Audience :: Science/Research",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
+keywords = ["Environment, Agent, Reinforcement Learning, Gymnasium"]
+dynamic = ["version"]
+
 
 [project.urls]
 Homepage = "https://knu-p4c-lab.github.io/"
@@ -34,8 +39,7 @@ Homepage = "https://knu-p4c-lab.github.io/"
 include-package-data = true
 
 [tool.setuptools.packages.find]
-namespaces = true
-where = ["kymnasium"]
+include = ["kymnasium*"]
 
 [tool.setuptools.package-data]
 "*" = ["*.csv", "*.ogg", "*.png"]

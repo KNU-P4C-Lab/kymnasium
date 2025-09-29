@@ -1,8 +1,5 @@
 from typing import Tuple
 import pygame
-import kymnasium as kym
-
-kym.Agent()
 
 UNIT_PIXEL_SIZE = 8
 UNIT_MARGIN = 2

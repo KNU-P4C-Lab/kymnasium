@@ -1,8 +1,8 @@
 import threading
-import numpy as np
+import random
+from typing import Any, Dict
 import gymnasium as gym
 import kymnasium as kym
-from kymnasium import RemoteEvaluator
 from kymnasium.alkkagi import ManualPlayWrapper, RemoteEnvWrapper
 
 
@@ -14,16 +14,12 @@ class RandomBlackAgent(kym.Agent):
     def load(cls, path: str) -> 'kym.Agent':
         pass
 
-    def __init__(self, seed: int = None):
-        super().__init__()
-        self.ran = np.random.default_rng(seed)
-
-    def act(self, observation: any, info: dict):
+    def act(self, observation: Any, info: Dict):
         return {
             'turn': 0,
-            'angle': self.ran.uniform(-180, 180),
-            'power': self.ran.uniform(1, 2500),
-            'index': None
+            'angle': random.uniform(-180, 180),
+            'power': random.uniform(1, 2500),
+            'index': random.choice([0, 1, 2, 3, 4])
         }
 
 
@@ -35,45 +31,40 @@ class RandomWhiteAgent(kym.Agent):
     def load(cls, path: str) -> 'kym.Agent':
         pass
 
-    def __init__(self, seed: int = None):
-        super().__init__()
-        self.ran = np.random.default_rng(seed)
-
-    def act(self, observation: any, info: dict):
+    def act(self, observation: Any, info: Dict):
         return {
             'turn': 1,
-            'angle': self.ran.uniform(-180, 180),
-            'power': self.ran.uniform(1, 2500),
-            'index': None
+            'angle': random.uniform(-180, 180),
+            'power': random.uniform(1, 2500),
+            'index': random.choice([0, 1, 2, 3, 4])
         }
 
 
-def manual():
+def manual_play():
     wrapper = ManualPlayWrapper(
-        env_id='kymnasium/AlKkaGi-9x9-v0',
-        debug=True,
+        env_id='kymnasium/AlKkaGi-5x5-v0',
+        debug=False,
         render_mode='human',
         obs_type='custom',
-        bgm=True,
+        bgm=False
     )
     wrapper.play()
 
 
-def random_local():
+def local_random_play():
     env = gym.make(
-        id='kymnasium/AlKkaGi-9x9-v0',
-        debug=True,
+        id='kymnasium/AlKkaGi-5x5-v0',
         render_mode='human',
         obs_type='custom',
-        bgm=True,
+        bgm=True
     )
 
-    agent_black = RandomBlackAgent(42)
-    agent_white = RandomWhiteAgent(45)
+    agent_black = RandomBlackAgent()
+    agent_white = RandomWhiteAgent()
 
     done = False
     observation, info = env.reset()
-
+    steps = 0
     while not done:
         if observation['turn'] == 0:
             action = agent_black.act(observation, info)
@@ -82,42 +73,41 @@ def random_local():
 
         observation, reward, terminated, truncated, info = env.step(action)
         done = terminated or truncated
+        steps += 1
+    return steps
 
 
-def random_remote_on_localhost():
+def remote_random_play():
     host = "localhost"
     port = 18861
 
     server = RemoteEnvWrapper(
         allowed_ids=['test-1', 'test-2'],
-        env_id='kymnasium/AlKkaGi-9x9-v0',
+        env_id='kymnasium/AlKkaGi-5x5-v0',
         render_mode='human',
         obs_type='custom',
         bgm=True,
-        debug=True
+        debug=False
     )
 
-    agent_black = RandomBlackAgent(42)
-    agent_white = RandomWhiteAgent(45)
-
-    client_black = RemoteEvaluator(
-        eval_id='test-1',
-        agent=agent_black,
+    kwargs_black = dict(
+        user_id='test-1',
+        agent=RandomBlackAgent(),
         host=host,
         port=port,
-        debug=True
+        debug=False
     )
 
-    client_white = RemoteEvaluator(
-        eval_id='test-2',
-        agent=agent_white,
+    kwargs_white = dict(
+        user_id='test-2',
+        agent=RandomWhiteAgent(),
         host=host,
         port=port,
-        debug=True
+        debug=False
     )
 
-    thread_black = threading.Thread(target=client_black.evaluate, daemon=True)
-    thread_white = threading.Thread(target=client_white.evaluate, daemon=True)
+    thread_black = threading.Thread(target=kym.evaluate_remote, kwargs=kwargs_black, daemon=True)
+    thread_white = threading.Thread(target=kym.evaluate_remote, kwargs=kwargs_white, daemon=True)
 
     thread_black.start()
     thread_white.start()
@@ -128,20 +118,37 @@ def random_remote_on_localhost():
     thread_white.join()
 
 
-def run_server(host, port):
+def run_server(allowed_ids, host, port):
     server = RemoteEnvWrapper(
-        allowed_ids=['test-1', 'test-2'],
-        env_id='kymnasium/AlKkaGi-9x9-v0',
+        allowed_ids=allowed_ids,
+        env_id='kymnasium/AlKkaGi-5x5-v0',
         render_mode='human',
         obs_type='custom',
         bgm=True,
         debug=True
     )
-
     server.run(host, port)
 
 
 if __name__ == "__main__":
-    manual()
-    #a = dict()
-    #print(dir(a))
+    '''
+    host, port = "10.11.60.54", 18861
+    kwargs_black = dict(
+        user_id='test-1',
+        agent=RandomBlackAgent(),
+        host=host,
+        port=port,
+        debug=False
+    )
+    thread_black = threading.Thread(target=kym.evaluate_remote, kwargs=kwargs_black, daemon=True)
+    thread_black.start()
+
+    run_server(
+        allowed_ids=['test-1', 'test-2'],
+        host='192.168.0.24',
+        port=port
+    )
+    '''
+
+    manual_play()
+

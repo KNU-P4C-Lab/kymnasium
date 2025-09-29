@@ -1,40 +1,40 @@
 import random
 from typing import Any, Dict
 import kymnasium as kym
-from kymnasium.avoid_blurp import ManualPlayWrapper
+from kymnasium.grid_adventure import ManualPlayWrapper
 
 
 class RandomAgent(kym.Agent):
+    def save(self, path: str):
+        pass
+
     @classmethod
     def load(cls, path: str) -> 'kym.Agent':
         pass
 
-    def save(self, path: str):
-        pass
-
     def act(self, observation: Any, info: Dict):
-        action = random.choice([0, 1, 2])
+        action = random.choice([0, 1, 2, 3, 4, 5])
         return action
 
 
 def manual_play():
     agent = ManualPlayWrapper(
-        'kymnasium/AvoidBlurp-Normal-v0',
-        debug=True,
+        env_id='kymnasium/GridAdventure-Crossing-26x26-v0',
         render_mode='human',
-        bgm=True
+        bgm=True,
+        debug=True
     )
-    agent.play(play_once=True)
+    agent.play()
 
 
 def random_play():
-    kym.evaluate(
+    evaluator = kym.evaluate(
+        env_id='kymnasium/GridAdventure-Crossing-26x26-v0',
         agent=RandomAgent(),
-        env_id='kymnasium/AvoidBlurp-Normal-v0',
-        debug=True,
         render_mode='human',
         bgm=True
     )
+    evaluator.run()
 
 
 if __name__ == "__main__":
