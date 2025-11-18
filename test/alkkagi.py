@@ -42,7 +42,7 @@ class RandomWhiteAgent(kym.Agent):
 
 def manual_play():
     wrapper = ManualPlayWrapper(
-        env_id='kymnasium/AlKkaGi-5x5-v0',
+        env_id='kymnasium/AlKkaGi-3x3-v0',
         debug=False,
         render_mode='human',
         obs_type='custom',
@@ -51,9 +51,23 @@ def manual_play():
     wrapper.play()
 
 
+def manual_vs_agent_play():
+    agent_black = RandomBlackAgent()
+
+    wrapper = ManualPlayWrapper(
+        env_id='kymnasium/AlKkaGi-3x3-v0',
+        debug=False,
+        agent=agent_black,
+        agent_turn=0,
+        render_mode='human',
+        obs_type='custom',
+        bgm=False
+    )
+    wrapper.play()
+
 def local_random_play():
     env = gym.make(
-        id='kymnasium/AlKkaGi-5x5-v0',
+        id='kymnasium/AlKkaGi-3x3-v0',
         render_mode='human',
         obs_type='custom',
         bgm=True
@@ -83,7 +97,7 @@ def remote_random_play():
 
     server = RemoteEnvWrapper(
         allowed_ids=['test-1', 'test-2'],
-        env_id='kymnasium/AlKkaGi-5x5-v0',
+        env_id='kymnasium/AlKkaGi-3x3-v0',
         render_mode='human',
         obs_type='custom',
         bgm=True,
@@ -121,7 +135,7 @@ def remote_random_play():
 def run_server(allowed_ids, host, port):
     server = RemoteEnvWrapper(
         allowed_ids=allowed_ids,
-        env_id='kymnasium/AlKkaGi-5x5-v0',
+        env_id='kymnasium/AlKkaGi-3x3-v0',
         render_mode='human',
         obs_type='custom',
         bgm=True,
@@ -132,23 +146,17 @@ def run_server(allowed_ids, host, port):
 
 if __name__ == "__main__":
     '''
-    host, port = "10.11.60.54", 18861
-    kwargs_black = dict(
-        user_id='test-1',
-        agent=RandomBlackAgent(),
-        host=host,
-        port=port,
-        debug=False
-    )
-    thread_black = threading.Thread(target=kym.evaluate_remote, kwargs=kwargs_black, daemon=True)
-    thread_black.start()
+    allowed_ids = [
+        'test-black',
+        'test-white'
+    ]
 
     run_server(
-        allowed_ids=['test-1', 'test-2'],
+        allowed_ids=allowed_ids,
         host='192.168.0.24',
-        port=port
+        port=18861
     )
     '''
 
-    manual_play()
-
+    # manual_play()
+    manual_vs_agent_play()

@@ -39,3 +39,4 @@ def random_play():
 
 if __name__ == "__main__":
     manual_play()
+    import gymnasium as gym

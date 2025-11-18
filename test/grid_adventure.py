@@ -21,7 +21,8 @@ def manual_play():
     agent = ManualPlayWrapper(
         env_id='kymnasium/GridAdventure-FullMaze-32x32-v0',
         render_mode='human',
-        debug=True
+        debug=True,
+        bgm= True
     )
     agent.play()
 
