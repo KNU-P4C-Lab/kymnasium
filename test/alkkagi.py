@@ -4,7 +4,7 @@ from typing import Any, Dict
 import gymnasium as gym
 import kymnasium as kym
 from kymnasium.alkkagi import ManualPlayWrapper, RemoteEnvWrapper
-
+import rpyc
 
 class RandomBlackAgent(kym.Agent):
     def save(self, path: str):
@@ -101,7 +101,7 @@ def remote_random_play():
         render_mode='human',
         obs_type='custom',
         bgm=True,
-        debug=False
+        debug=True
     )
 
     kwargs_black = dict(
@@ -109,7 +109,7 @@ def remote_random_play():
         agent=RandomBlackAgent(),
         host=host,
         port=port,
-        debug=False
+        debug=True
     )
 
     kwargs_white = dict(
@@ -117,7 +117,7 @@ def remote_random_play():
         agent=RandomWhiteAgent(),
         host=host,
         port=port,
-        debug=False
+        debug=True
     )
 
     thread_black = threading.Thread(target=kym.evaluate_remote, kwargs=kwargs_black, daemon=True)
@@ -146,17 +146,32 @@ def run_server(allowed_ids, host, port):
 
 if __name__ == "__main__":
     '''
-    allowed_ids = [
-        'test-black',
-        'test-white'
-    ]
+    - Host: 114.70.104.70
+    - Port: 18861
+    '''
+    '''
+    game_ids_1 = ['0st', '카페모카']
+    game_ids_2 = ['봉구스밥버거', '123']
+    game_ids_3 = ['전형규', 'wqdsdsf']
+    game_ids_4 = ['123', '0st']
+    game_ids_5 = ['wqdsdsf', '카페모카']
+    game_ids_6 = ['전형규', '봉구스밥버거']
+    game_ids_7 = ['0st', 'wqdsdsf']
+    game_ids_8 = ['123', '전형규']
+    game_ids_9 = ['카페모카', '봉구스밥버거']
+    game_ids_10 = ['전형규', '0st']
+    game_ids_11 = ['봉구스밥버거', 'wqdsdsf']
+    game_ids_12 = ['카페모카', '123']
+    game_ids_13 = ['0st', '봉구스밥버거']
+    game_ids_14 = ['카페모카', '전형규']
+    game_ids_15 = ['wqdsdsf', '123']
+
 
     run_server(
-        allowed_ids=allowed_ids,
+        allowed_ids=game_ids_21,
         host='192.168.0.24',
         port=18861
     )
     '''
+    #remote_random_play()
 
-    # manual_play()
-    manual_vs_agent_play()
