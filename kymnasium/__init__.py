@@ -8,7 +8,7 @@ import os
 import gymnasium as gym
 from .agent import Agent
 from .evaluate import evaluate, evaluate_remote, RemoteEnvWrapper, InvalidActionError, NotAllowedUserIdError
-from . import alkkagi, avoid_blurp, grid_adventure, grid_survivor
+from . import alkkagi, mario_world, grid_world, grid_survivor
 
 
 __all__ = [
@@ -81,7 +81,7 @@ gym.register(
 
 gym.register(
     id='kymnasium/AvoidBlurp-Easy-v0',
-    entry_point='kymnasium.avoid_blurp.registration:_create_env',
+    entry_point='kymnasium.mario_world.registration:_create_env',
     disable_env_checker=True,
     kwargs=dict(
         game_duration=120,
@@ -95,7 +95,7 @@ gym.register(
 
 gym.register(
     id='kymnasium/AvoidBlurp-Normal-v0',
-    entry_point='kymnasium.avoid_blurp.registration:_create_env',
+    entry_point='kymnasium.mario_world.registration:_create_env',
     disable_env_checker=True,
     kwargs=dict(
         game_duration=120,
@@ -109,7 +109,7 @@ gym.register(
 
 gym.register(
     id='kymnasium/AvoidBlurp-Hard-v0',
-    entry_point='kymnasium.avoid_blurp.registration:_create_env',
+    entry_point='kymnasium.mario_world.registration:_create_env',
     disable_env_checker=True,
     kwargs=dict(
         game_duration=120,
@@ -127,13 +127,13 @@ gym.register(
 # -------------------------------------------------------------------------------------------
 gym.register(
     id='kymnasium/GridAdventure-FullMaze-26x26-v0',
-    entry_point='kymnasium.grid_adventure.registration:_create_env',
+    entry_point='kymnasium.grid_world.registration:_create_env',
     disable_env_checker=True,
     kwargs=dict(
         max_steps=1000,
         blueprint=os.path.join(
             os.path.dirname(__file__),
-            'grid_adventure',
+            'grid_world',
             'assets',
             'full-maze-26x26-v0.csv'
         ),
@@ -142,13 +142,13 @@ gym.register(
 
 gym.register(
     id='kymnasium/GridAdventure-FullMaze-32x32-v0',
-    entry_point='kymnasium.grid_adventure.registration:_create_env',
+    entry_point='kymnasium.grid_world.registration:_create_env',
     disable_env_checker=True,
     kwargs=dict(
         max_steps=1000,
         blueprint=os.path.join(
             os.path.dirname(__file__),
-            'grid_adventure',
+            'grid_world',
             'assets',
             'full-maze-32x32-v0.csv'
         ),
@@ -157,13 +157,13 @@ gym.register(
 
 gym.register(
     id='kymnasium/GridAdventure-Crossing-26x26-v0',
-    entry_point='kymnasium.grid_adventure.registration:_create_env',
+    entry_point='kymnasium.grid_world.registration:_create_env',
     disable_env_checker=True,
     kwargs=dict(
         max_steps=1000,
         blueprint=os.path.join(
             os.path.dirname(__file__),
-            'grid_adventure',
+            'grid_world',
             'assets',
             'crossing-26x26-v0.csv'
         ),

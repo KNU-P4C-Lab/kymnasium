@@ -4,7 +4,7 @@ from typing import Any, Dict
 import gymnasium as gym
 import kymnasium as kym
 from kymnasium.alkkagi import ManualPlayWrapper, RemoteEnvWrapper
-import rpyc
+
 
 class RandomBlackAgent(kym.Agent):
     def save(self, path: str):
@@ -149,29 +149,19 @@ if __name__ == "__main__":
     - Host: 114.70.104.70
     - Port: 18861
     '''
-    '''
-    game_ids_1 = ['0st', '카페모카']
-    game_ids_2 = ['봉구스밥버거', '123']
-    game_ids_3 = ['전형규', 'wqdsdsf']
-    game_ids_4 = ['123', '0st']
-    game_ids_5 = ['wqdsdsf', '카페모카']
-    game_ids_6 = ['전형규', '봉구스밥버거']
-    game_ids_7 = ['0st', 'wqdsdsf']
-    game_ids_8 = ['123', '전형규']
-    game_ids_9 = ['카페모카', '봉구스밥버거']
-    game_ids_10 = ['전형규', '0st']
-    game_ids_11 = ['봉구스밥버거', 'wqdsdsf']
-    game_ids_12 = ['카페모카', '123']
-    game_ids_13 = ['0st', '봉구스밥버거']
-    game_ids_14 = ['카페모카', '전형규']
-    game_ids_15 = ['wqdsdsf', '123']
 
+    '''
+    '전형규', 'MonteCarlo', '유재형', '우주선'
+    '0st', '카페모카', 'wqdsdsf', '123', '봉구스밥버거'
+    '''
 
     run_server(
-        allowed_ids=game_ids_21,
+        allowed_ids=['봉구스밥버거', 'wqdsdsf'],
+#        allowed_ids=['test'],
         host='192.168.0.24',
         port=18861
     )
-    '''
-    #remote_random_play()
+
+
+
 

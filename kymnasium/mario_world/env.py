@@ -241,6 +241,7 @@ class Color:
     RED = (255, 0, 0)
     BLUE = (0, 0, 255)
 
+
 class AvoidBlurpEnv(gym.Env):
     metadata = {
         'render_modes': ['human', 'rgb_array'],

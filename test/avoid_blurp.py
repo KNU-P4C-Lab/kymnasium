@@ -1,7 +1,7 @@
 import random
 from typing import Any, Dict
 import kymnasium as kym
-from kymnasium.avoid_blurp import ManualPlayWrapper
+from kymnasium.mario_world import ManualPlayWrapper
 
 
 class RandomAgent(kym.Agent):

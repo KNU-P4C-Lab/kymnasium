@@ -182,7 +182,6 @@ class SlingShot:
                 sx + (ex - sx) * end_ratio,
                 sy + (ey - sy) * end_ratio
             )
-
             pygame.draw.line(surface, Color.LIGHT_GREY, dash_start, dash_end, 2)
 
         arrow_size = 10

@@ -107,6 +107,7 @@ class RemoteEnvWrapper(ABC, rpyc.Service):
             port=18861,
             protocol_config={
                 'import_custom_exceptions': True,
+                'allow_pickle': True
             }
         )
         server_thread = threading.Thread(target=server.start, daemon=True)
@@ -236,7 +237,10 @@ def evaluate_remote(
     while not done:
         try:
             if conn is None or conn.closed:
-                conn = rpyc.connect(host, port, config={'connid': user_id})
+                conn = rpyc.connect(host, port, config={
+                    'connid': user_id,
+                    'allow_pickle': True
+                })
                 service = conn.root
                 logger.info(f'Connected to the server: {host}:{port}')
 

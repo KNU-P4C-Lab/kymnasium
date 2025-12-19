@@ -62,7 +62,7 @@ class Actions(IntEnum):
     unlock = 5
 
 
-class GridAdventureEnv(MiniGridEnv):
+class GridWorldEnv(MiniGridEnv):
     """
     Actions available:
     - 0: turn left
