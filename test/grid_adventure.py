@@ -19,7 +19,7 @@ class RandomAgent(kym.Agent):
 
 def manual_play():
     agent = ManualPlayWrapper(
-        env_id='kymnasium/GridAdventure-FullMaze-32x32-v0',
+        env_id='kymnasium/GridWorld-Adventure-32x32',
         render_mode='human',
         debug=True,
         bgm= True
@@ -29,7 +29,7 @@ def manual_play():
 
 def random_play():
     kym.evaluate(
-        env_id='kymnasium/GridAdventure-FullMaze-26x26-v0',
+        env_id='kymnasium/GridWorld-Adventure-26x26',
         agent=RandomAgent(),
         render_mode='human',
         bgm=True

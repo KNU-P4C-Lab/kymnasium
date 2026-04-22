@@ -6,7 +6,7 @@ from minigrid.wrappers import RGBImgObsWrapper as MiniGridRGBImgObsWrapper, \
     FullyObsWrapper as MiniGridFullyObsWrapper
 from itertools import product
 from .env import Actions
-from ..util import ManualPlayWrapper
+from ..manual import ManualPlayWrapper
 
 
 class FullyObsWrapper(MiniGridFullyObsWrapper):

@@ -46,7 +46,7 @@ def manual_play():
         debug=False,
         render_mode='human',
         obs_type='custom',
-        bgm=False
+        bgm=True
     )
     wrapper.play()
 
@@ -145,22 +145,7 @@ def run_server(allowed_ids, host, port):
 
 
 if __name__ == "__main__":
-    '''
-    - Host: 114.70.104.70
-    - Port: 18861
-    '''
-
-    '''
-    '전형규', 'MonteCarlo', '유재형', '우주선'
-    '0st', '카페모카', 'wqdsdsf', '123', '봉구스밥버거'
-    '''
-
-    run_server(
-        allowed_ids=['봉구스밥버거', 'wqdsdsf'],
-#        allowed_ids=['test'],
-        host='192.168.0.24',
-        port=18861
-    )
+    manual_play()
 
 
 

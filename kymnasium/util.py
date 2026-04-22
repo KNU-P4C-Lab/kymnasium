@@ -1,14 +1,15 @@
 import os
 import sys
-from abc import abstractmethod, ABC
-from typing import Literal
+from typing import Literal, Tuple, List
 import gymnasium as gym
 import pygame
 import logging
+import numpy as np
+from itertools import product
+from dataclasses import dataclass
 
 
 type ObsType = Literal['image', 'custom']
-
 
 def wait_for_close(env: gym.Env):
     if env is None:
@@ -37,8 +38,40 @@ def play_bgm(path: str) -> None:
         pygame.mixer.music.load(path)
         pygame.mixer.music.set_volume(0.5)
         pygame.mixer.music.play(loops=-1)
-    except pygame.error:
+    except pygame.error as e:
+        import traceback
+        traceback.print_exc()
         pass
+
+
+def load_sprite(
+        sprite: pygame.Surface,
+        size: Tuple[int, int],
+        offset: Tuple[int, int],
+        flip_x: bool = False,
+        flip_y: bool = False,
+        scale: float = 1,
+) -> pygame.Surface:
+    size = (size[0] * scale, size[1] * scale)
+    offset = (offset[0] * scale, offset[1] * scale)
+    img = sprite.subsurface(*offset, *size)
+    img = pygame.transform.flip(img, flip_x, flip_y)
+
+    return img
+
+
+def swap_colors(
+        surface: pygame.Surface,
+        colors: List[Tuple[Tuple[int, int, int], Tuple[int, int, int]]]
+):
+    copy = surface.copy()
+
+    for old, new in colors:
+        mask = pygame.mask.from_threshold(copy, old, threshold=(1, 1, 1, 255))
+        masked_surface = mask.to_surface(setcolor=new, unsetcolor=(0, 0, 0, 0))
+        copy.blit(masked_surface, (0, 0))
+
+    return copy
 
 
 def get_logger(name: str, debug: bool = False):
@@ -62,80 +95,3 @@ def get_logger(name: str, debug: bool = False):
         logging.DEBUG if debug else logging.INFO
     )
     return logger
-
-
-class ManualPlayWrapper(ABC):
-    def __init__(
-            self,
-            env_id: str,
-            debug: bool = False,
-            **kwargs,
-    ) -> None:
-        kwargs = kwargs or {}
-        kwargs['render_mode'] = 'human'
-        env = gym.make(env_id, **kwargs)
-
-        if env.unwrapped.render_mode != 'human':
-            raise ValueError('"render_mode" should be "human" for the manual play.')
-
-        self.env = env
-        self._logger = get_logger(env_id, debug)
-
-    @abstractmethod
-    def handle_events(self, event: pygame.event.Event):
-        raise NotImplementedError()
-
-    @property
-    def default_action_(self):
-        return None
-
-    def play(self, play_once: bool = True):
-        done, steps, action = True, 0, None
-        play_count = 0
-        running = True
-
-        while running:
-            if done:
-                if play_once and play_count > 0:
-                    break
-
-                done, steps, action = False, 0, None
-                obs, info = self.env.reset()
-                play_count += 1
-                self._logger.info(f'{play_count}th Play: {self.env.spec.id}')
-                self._logger.info(f'Environment reset!')
-
-                self._logger.debug(f'{steps}th Observation: {obs}')
-                self._logger.debug(f'{steps}th Info: {info}')
-            elif action is not None:
-                self._logger.debug(f'{steps}th Action: {action or self.default_action_}')
-                obs, reward, terminated, truncated, info = self.env.step(action)
-                done = terminated or truncated
-
-                steps += 1
-                self._logger.debug(f'{steps}th Observation: {obs}')
-                self._logger.debug(f'{steps}th Info: {info}')
-
-                if done:
-                    self._logger.info('Completed!')
-                action = None
-            else:
-                self.env.render()
-
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    running = False
-                elif event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                    running = False
-                elif event.type == pygame.KEYDOWN and event.key == pygame.K_BACKSPACE:
-                    done = True
-                else:
-                    action = self.handle_events(event)
-                    break
-
-            if action is None:
-                action = self.default_action_
-
-        wait_for_close(self.env)
-
-        self._logger.info(f'Playable environment closed!')

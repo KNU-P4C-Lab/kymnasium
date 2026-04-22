@@ -7,14 +7,16 @@ Kymnasium provides a simple and effective platform for students to learn, implem
 
 ## Environments
 * **Alkkagi**: A Korean traditional game where the objective is to flick your stones to knock the opponent's stones off the board.
-* **Avoid Blurp**: An environment where the agent must learn to avoid free-fall enemies.
-* **Grid Adventure**: A classic grid-world environment where the agent navigates a maze to reach a goal.
-* **Grid Survivor**: A grid-world environment where the agent must survive for as long as possible.
+* **Avoid Blurp**: An environment where the Mario must move left and right to avoid free-falling Blurps.
+* **Bullet Bill**: An environment where the Mario must jump around to avoid flying Bullet Bills.
+* **Grid World**: A classic grid-world environment where the agent navigates a maze to reach a goal.
+* **Zelda's Adventure**: A game where the Link must navigate a maze and fight against enemies to reach a goal.
+
 
 ## Getting Started
 ### Installation
 ```bash
-pip install kymnasium
+pip -U install kymnasium
 ```
 
 ### Implement Your Agent
@@ -22,7 +24,7 @@ To train your own agent, you need to override 'kymnasium.Agent' and implement th
 
 ```python
 
-from src import kymnasium as kym
+import kymnasium as kym
 
 
 # Your agent logic goes here
@@ -49,12 +51,12 @@ import gymnasium as gym
 EPISODES = 100
 
 # Path for saving your agent
-PATH_AGENT = './agent.pkl'
+PATH_AGENT = 'agent.pkl'
 agent = YourAgent()
 
 # Create the environment
 env = gym.make(
-    id="kymnasium/GridAdventure-FullMaze-26x26-v0", # Environment ID
+    id="kymnasium/GridWorld-Crossing-26x26", # Environment ID
     render_mode='rgb_array', # or 'human',
     obs_type='custom', # or 'image'
     bgm=False # or True for playing background music
@@ -62,15 +64,15 @@ env = gym.make(
 for _ in range(EPISODES):
     observation, info = env.reset()
     done = False
+    
     while not done: 
         action = agent.act(observation, info) 
         observation, reward, terminated, truncated, info = env.step(action) 
-        if terminated or truncated: 
-            done = True
+        done = terminated or truncated
         # Here writes any training logic
-
-# Close the environment        
-env.close()
+        
+    # Close the environment        
+    env.close()
 
 # Save your agent
 agent.save(PATH_AGENT)
@@ -80,27 +82,29 @@ agent.save(PATH_AGENT)
 
 ```python
 
-from src import kymnasium as kym
+import kymnasium as kym
 
-evaluator = kym.LocalEvaluator(
-    env_id="kymnasium/GridAdventure-FullMaze-26x26-v0",  # Environment ID
-    agent=YourAgent.load(PATH_AGENT),  # Your trained agent
-    render_mode='human',  # 'render_mode' should be 'human' for live evaluation
-    obs_type='custom',  # or 'image'
-    bgm=True  # 'bgm' should be 'True' for live evaluation
+
+agent = YourAgent.load(PATH_AGENT)
+
+kym.evaluate(
+    env_id='kymnasium/GridWorld-Crossing-26x26',
+    agent=agent,
+    render_mode='human',
+    bgm=True
 )
-
-evaluator.run()
 ```
 
 ## Manual Play
 If you want to manually play the environment, see below:
 ```python
-from grid_adventure import ManualPlayWrapper
+from kymnasium.grid_world import ManualPlayWrapper
+
 
 agent = ManualPlayWrapper(
-    env_id='kymnasium/GridAdventure-FullMaze-26x26-v0',
-    render_mode='human',  # 'render_mode' should be 'human' for manual play
+    env_id='kymnasium/GridWorld-Crossing-26x26',
+    bgm=True,
+    debug=True
 )
 agent.play()
 ```

@@ -1,0 +1,60 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "stage-1.tmx",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "fileStates": {
+        "D:/Projects/kymnasium/design/avoid_blurp/sprite.tsx": {
+            "scaleInDock": 1
+        },
+        "D:/Projects/kymnasium/design/avoid_blurp/stage-1.tmx": {
+            "scale": 3.9124999999999996,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 104.02555910543133,
+                "y": 152.07667731629397
+            }
+        },
+        "sprite.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "stage-1.tmx": {
+            "scale": 3,
+            "selectedLayer": 1,
+            "viewCenter": {
+                "x": 245.33333333333331,
+                "y": 169
+            }
+        }
+    },
+    "last.exportedFilePath": "D:/Projects/kymnasium/kymnasium/bullet_bill/assets",
+    "last.imagePath": "D:/Projects/kymnasium/design/bullet_bill",
+    "map.height": 18,
+    "map.lastUsedExportFilter": "CSV files (*.csv)",
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 27,
+    "openFiles": [
+        "sprite.tsx",
+        "stage-1.tmx"
+    ],
+    "project": "bullet_bill.tiled-project",
+    "recentFiles": [
+        "sprite.tsx",
+        "stage-1.tmx",
+        "D:/Projects/kymnasium/design/avoid_blurp/stage-1.tmx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    },
+    "tileset.transparentColor": "#9290ff",
+    "tileset.useTransparentColor": true
+}

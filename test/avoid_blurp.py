@@ -1,7 +1,7 @@
 import random
 from typing import Any, Dict
 import kymnasium as kym
-from kymnasium.mario_world import ManualPlayWrapper
+from kymnasium.avoid_blurp import ManualPlayWrapper
 
 
 class RandomAgent(kym.Agent):
@@ -19,12 +19,12 @@ class RandomAgent(kym.Agent):
 
 def manual_play():
     agent = ManualPlayWrapper(
-        'kymnasium/AvoidBlurp-Normal-v0',
-        debug=True,
+        'kymnasium/AvoidBlurp-Discrete-Ballistic-Normal-Stage-1',
+        debug=False,
         render_mode='human',
         bgm=True
     )
-    agent.play(play_once=True)
+    agent.play()
 
 
 def random_play():
@@ -39,4 +39,3 @@ def random_play():
 
 if __name__ == "__main__":
     manual_play()
-    import gymnasium as gym

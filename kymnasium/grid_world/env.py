@@ -9,6 +9,7 @@ from minigrid.core.mission import MissionSpace
 from minigrid.core.world_object import Lava, Key, Door, Goal, Wall, Ball
 from minigrid.minigrid_env import MiniGridEnv
 
+
 MISSION_NAME = 'Grid Adventure!'
 
 SYM_AGENT = 'A'

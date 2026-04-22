@@ -1,11 +1,14 @@
 import gymnasium as gym
 import numpy as np
+from typing import Any
 import pygame
 import pygame.math
 import math
-from .env import AlkkagiEnv, MAX_POWER, POWER_LINE_LENGTH, GAME_HEIGHT, GAME_WIDTH
+from .objs import SlingShot
+from .env import AlkkagiEnv
+from ..evaluate import RemoteEnvWrapper
 from ..agent import Agent
-from ..util import ManualPlayWrapper
+from ..manual import ManualPlayWrapper
 
 
 class AlkkagiManualPlayWrapper(ManualPlayWrapper):
@@ -21,9 +24,7 @@ class AlkkagiManualPlayWrapper(ManualPlayWrapper):
 
     def handle_events(self, event):
         env = self.env.unwrapped
-
-        if not isinstance(env, AlkkagiEnv):
-            return None
+        assert isinstance(env, AlkkagiEnv)
 
         if self._agent_turn is not None and self._agent is not None:
             if self._agent_turn == env.turn_:
@@ -43,7 +44,7 @@ class AlkkagiManualPlayWrapper(ManualPlayWrapper):
             dx, dy = sx - ex, sy - ey
             angle = pygame.math.Vector2(1, 0).angle_to(pygame.math.Vector2(dx, dy))
             distance = math.hypot(dx, dy)
-            power = min(distance * MAX_POWER / POWER_LINE_LENGTH, MAX_POWER)
+            power = min(distance * env.max_power / SlingShot.POWER_LINE_LENGTH, env.max_power)
             action = {
                 'turn': env.turn_,
                 'angle': angle,
@@ -66,19 +67,29 @@ class AlkkagiManualPlayWrapper(ManualPlayWrapper):
 class RGBImgObsWrapper(gym.ObservationWrapper):
     def __init__(self, env: gym.Env):
         super().__init__(env)
+        env = env.unwrapped
+        assert isinstance(env, AlkkagiEnv)
         self.observation_space = gym.spaces.Dict({
-            'image': gym.spaces.Box(low=0, high=255, shape=(GAME_HEIGHT, GAME_WIDTH, 3), dtype=np.uint8),
+            'image': gym.spaces.Box(
+                low=0, high=255, shape=(env.width, env.height, 3), dtype=np.uint8
+            ),
             'turn': gym.spaces.Discrete(2),
         })
 
     def observation(self, observation):
         env = self.env.unwrapped
-        if isinstance(env, AlkkagiEnv):
-            img = env.get_frame()
+        assert isinstance(env, AlkkagiEnv)
+        img = env.get_frame()
+        return {
+            'image': img,
+            'turn': env.turn_,
+        }
 
-            return {
-                'image': img,
-                'turn': env.turn_.value,
-            }
-        return None
 
+class AlkkagiRemoteEnvWrapper(RemoteEnvWrapper):
+    def serialize(self, observation: Any):
+        return observation
+
+    def verify_action(self, action) -> bool:
+        env = self.env.unwrapped
+        return isinstance(env, AlkkagiEnv) and action['turn'] == env.turn_

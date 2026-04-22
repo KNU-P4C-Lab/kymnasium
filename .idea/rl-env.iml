@@ -9,7 +9,7 @@
       <excludeFolder url="file://$MODULE_DIR$/src/kymnasium/kymnasium.egg-info" />
       <excludeFolder url="file://$MODULE_DIR$/test/files" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.12 (rl-env)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.12 (kymnasium)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

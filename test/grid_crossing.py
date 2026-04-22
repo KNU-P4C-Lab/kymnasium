@@ -13,14 +13,13 @@ class RandomAgent(kym.Agent):
         pass
 
     def act(self, observation: Any, info: Dict):
-        action = random.choice([0, 1, 2, 3, 4, 5])
+        action = random.choice([0, 1, 2])
         return action
 
 
 def manual_play():
     agent = ManualPlayWrapper(
-        env_id='kymnasium/GridAdventure-Crossing-26x26-v0',
-        render_mode='human',
+        env_id='kymnasium/GridWorld-Crossing-26x26',
         bgm=True,
         debug=True
     )
@@ -28,14 +27,13 @@ def manual_play():
 
 
 def random_play():
-    evaluator = kym.evaluate(
-        env_id='kymnasium/GridAdventure-Crossing-26x26-v0',
+    kym.evaluate(
+        env_id='kymnasium/GridWorld-Crossing-26x26',
         agent=RandomAgent(),
-        render_mode='human',
         bgm=True
     )
-    evaluator.run()
 
 
 if __name__ == "__main__":
     manual_play()
+    # random_play()

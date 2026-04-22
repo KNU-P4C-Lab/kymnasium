@@ -1,0 +1,99 @@
+{
+    "Map/SizeTest": {
+        "height": 4300,
+        "width": 2
+    },
+    "activeFile": "stage-2.tmx",
+    "expandedProjectPaths": [
+        "."
+    ],
+    "file.lastUsedOpenFilter": "All Files (*)",
+    "fileStates": {
+        "D:/Desktop/tee.tsx": {
+            "scaleInDock": 1,
+            "scaleInEditor": 1
+        },
+        "D:/Projects/kymnasium/design/avoid_blurp/sprite.tsx": {
+            "scaleInDock": 1
+        },
+        "D:/Projects/kymnasium/design/avoid_blurp/stage-1.tmx": {
+            "scale": 3.9124999999999996,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 103.89776357827478,
+                "y": 152.07667731629397
+            }
+        },
+        "objects.tsx": {
+            "scaleInDock": 3,
+            "scaleInEditor": 5.5
+        },
+        "stage-1.tmx": {
+            "scale": 1.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 280.3333333333333,
+                "y": 255.66666666666669
+            }
+        },
+        "stage-2.tmx": {
+            "scale": 2.3438,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": -11.94641180988139,
+                "y": 341.5393804932162
+            }
+        },
+        "stage-3.tmx": {
+            "scale": 1.5,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 288.3333333333333,
+                "y": 287.6666666666667
+            }
+        },
+        "test.tmx": {
+            "scale": 3.8853515625,
+            "selectedLayer": 0,
+            "viewCenter": {
+                "x": 127.91635248579902,
+                "y": 127.91635248579902
+            }
+        },
+        "tileset.tsx": {
+            "scaleInDock": 3,
+            "scaleInEditor": 3
+        }
+    },
+    "last.exportedFilePath": "D:/Projects/kymnasium/kymnasium/zelda_adventure/assets",
+    "last.imagePath": "D:/Projects/kymnasium/design/zelda_adventure",
+    "map.height": 16,
+    "map.lastUsedExportFilter": "CSV files (*.csv)",
+    "map.lastUsedFormat": "tmx",
+    "map.tileHeight": 16,
+    "map.tileWidth": 16,
+    "map.width": 16,
+    "openFiles": [
+        "stage-1.tmx",
+        "stage-2.tmx",
+        "stage-3.tmx"
+    ],
+    "project": "zelda_adventure.tiled-project",
+    "recentFiles": [
+        "stage-1.tmx",
+        "stage-3.tmx",
+        "stage-2.tmx",
+        "objects.tsx",
+        "test.tmx",
+        "D:/Projects/kymnasium/design/avoid_blurp/stage-1.tmx",
+        "tileset.tsx",
+        "D:/Desktop/tee.tsx"
+    ],
+    "tileset.lastUsedFormat": "tsx",
+    "tileset.tileSize": {
+        "height": 16,
+        "width": 16
+    },
+    "tileset.transparentColor": "#747474",
+    "tileset.useTransparentColor": true
+}
