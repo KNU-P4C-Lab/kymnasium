@@ -301,7 +301,7 @@ def learn(
 ):
     env = gym.make(
         'kymnasium/ZeldaAdventure-Stage-3',
-        render_mode='rgb_array',
+        render_mode='none',
     )
     agent = None
     if os.path.exists(path_agent):
@@ -331,6 +331,10 @@ def learn(
         state, mask = agent.preprocess(obs)
 
         while not done:
+            if steps <= 300:
+                epsilon = 0.05
+            else:
+                epsilon = 0.2
             action = agent.eps_greedy(epsilon, state, mask)
             next_obs, _, terminated, truncated, _ = env.step(action)
             next_state, next_mask = agent.preprocess(next_obs)
@@ -341,7 +345,7 @@ def learn(
             cleared = next_obs['link'][0] == 22 and next_obs['link'][1] == 1
             reward = agent.reward_func(state, action, next_state, death, timeout, cleared)
             agent.update(state, action, reward, next_state, next_mask, done, gamma, alpha)
-            state, mask = next_state, next_mask
+            obs, state, mask = next_obs, next_state, next_mask
 
             total_reward += reward
 
@@ -351,33 +355,32 @@ def learn(
 
         agent.end_episode(avg_reward, death, timeout, cleared)
 
-        if i % save_interval == 0:
-            agent.save(os.path.join(path_agent, f'./Ep. #{i}'))
+        if agent.result_.n_episode_ % save_interval == 0:
+            agent.save(os.path.join(path_agent, f'./Ep. #{agent.result_.n_episode_}'))
 
         pbar.set_postfix(
             eps=f'{epsilon:.5f}',
             n_state=agent.n_state_,
             n_state_action=agent.n_state_action_,
             episode=agent.result_.n_episode_,
-            reward=agent.result_.mean_rewards_,
-            best=agent.result_.best_rewards_,
-            death_ratio=agent.result_.death_ratio_,
-            timeout_ratio=agent.result_.timeout_ratio_,
-            cleared_ratio=agent.result_.cleared_ratio_,
-            steps=steps
+            steps=steps,
+            reward=f'{agent.result_.mean_rewards_:.5f}',
+            best=f'{agent.result_.best_rewards_:.5f}',
+            death_ratio=f'{agent.result_.death_ratio_:.5f}',
+            timeout_ratio=f'{agent.result_.timeout_ratio_:.5f}',
+            cleared_ratio=f'{agent.result_.cleared_ratio_:.5f}',
         )
 
 if __name__ == '__main__':
     learn(
         './zelda',
-        max_episode=500000,
-        full_exp_episode=10000,
-        init_epsilon=1.0,
-        min_epsilon=0.2,
+        max_episode=5000000,
+        full_exp_episode=0,
+        init_epsilon=0.2,
+        min_epsilon=0.20,
         decay_rate=0.99995,
         gamma=0.99995,
         max_steps=999,
-        save_interval=1000,
+        save_interval=2000,
         alpha=0.1
     )
-    # best_play('./zelda/Ep. #32500')

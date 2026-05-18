@@ -97,9 +97,9 @@ kym.evaluate(
 
 ## Manual Play
 If you want to manually play the environment, see below:
-```python
-from kymnasium.grid_world import ManualPlayWrapper
 
+```python
+from kymnasium.envs.grid_world import ManualPlayWrapper
 
 agent = ManualPlayWrapper(
     env_id='kymnasium/GridWorld-Crossing-26x26',

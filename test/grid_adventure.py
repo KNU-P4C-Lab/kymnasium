@@ -1,7 +1,7 @@
 import random
 from typing import Any, Dict
 import kymnasium as kym
-from kymnasium.grid_world import ManualPlayWrapper
+from kymnasium.envs.grid_world import ManualPlayWrapper
 
 
 class RandomAgent(kym.Agent):

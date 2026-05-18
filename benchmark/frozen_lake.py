@@ -3,7 +3,9 @@ import pickle
 import kymnasium as kym
 import gymnasium as gym
 import numpy as np
-
+from tensorflow import keras
+import tensorflow as tf
+from tqdm.auto import tqdm
 
 CUSTOM_MAP = [
     "SFFFFFFH",
@@ -193,51 +195,193 @@ def train(phi: float, gamma: float, is_value_iter: bool, path: str):
     agent.save(path)
 
 
-def run(path: str):
-    agent = TrainedAgent.load(path)
+def reward_func(obs, done):
+    if obs == 63:
+        return 1.0
+    elif done:
+        return -1.0
+    else:
+        return -0.01
 
+@tf.function
+def train_fa(model, optimizer, objective, states, actions, targets):
+
+    with tf.GradientTape() as tape:
+        # 이제 목적 함수의 값을 계산하자.
+        values = model(states)
+
+        values = values * actions
+
+        values = keras.ops.sum(values, axis=1)
+
+        loss = objective(targets, values)
+
+    gradients = tape.gradient(
+        loss,  # 목적 함수의 값
+        model.trainable_variables  # 목적 함수를 모델의 훈련해야할 매개변수로 미분
+    )
+    optimizer.apply_gradients(zip(gradients, model.trainable_variables))
+
+    return loss
+
+@tf.function
+def eps_greedy(model, state):
+    Q = model(keras.ops.expand_dims(state, axis=0))
+    return  keras.ops.ravel(Q)
+
+
+def monte_carlo_fa():
     env = gym.make(
         id='FrozenLake-v1',
-        render_mode='human',
+        render_mode='rgb_array',
         desc=CUSTOM_MAP,
-        is_slippery=False,
+        is_slippery=False,  # 타일에서 미끄러지는 여부를 결정
+    )
+    # 할인율
+    GAMMA = 0.99
+
+    # 최소 Epsilon
+    EPS_MIN = 0.10
+
+    # 매 에피소드마다 감쇄시킬 Epsilon의 정도로,
+    # 신경망 훈련에 시간이 좀 걸리는지라 지난 번보다 10배 크게 잡았다.
+    EPS_DECAY = 0.9995
+
+    # Epsilon을 감쇄시키지 않고 (Full Exploration) 상호작용 할 초반 에피소드의 갯수
+    # 지난 번에는 15000회로 했으나, 이번에는 시간이 좀 걸리기 때문에 500회 정도로 하겠다.
+    EPISODE_FULL_EXP = 5000
+
+    # 최대로 상호작용 할 에피소드
+    EPISODE_MAX = 500000
+
+    # 조기 종료를 위한 평균 보상
+    EARLY_STOP_AVG_REWARD = 0.06
+
+    # 평균 보상을 관측할 최근 에피소드의 개수
+    EPISODE_MONITOR = 10
+
+    # 목표 지점의 좌표
+    POS_GOAL = 8 * 8 - 1
+
+    # 행동
+    ACTIONS = [0, 1, 2, 3]
+
+    # 상태의 갯수
+    N_STATES = 8 * 8
+
+    # 행동의 갯수
+    N_ACTIONS = len(ACTIONS)
+
+    # 랜덤 시드
+    SEED = 42
+
+    model = keras.models.Sequential([
+        # 64차원 입력을 받는다
+        keras.layers.Input(
+            shape=(N_STATES,),
+        ),
+        # 64차원 입력을 128개의 퍼셉트론이 있는 레이어로 연결한다.
+        keras.layers.Dense(
+            units=128,
+            activation=keras.activations.relu,
+            kernel_initializer=keras.initializers.HeNormal(seed=42),
+        ),
+        # 4개의 퍼셉트론이 있는 레이어를 연결한다.
+        # 각 퍼셉트론이 상, 하, 좌, 우 행동에 대한 행동 가치 함수를 출력하는 것이다.
+        keras.layers.Dense(
+            units=N_ACTIONS,
+            activation=keras.activations.linear,
+            kernel_initializer=keras.initializers.GlorotNormal(seed=42),
+        )
+    ])
+
+    objective = keras.losses.Huber(
+        # Huber Loss의 Delta로, Error가 이 값보다 작다면 Squared Error로,
+        # 크다면 적절히 보정해준다. 보통은 1.0으로 잡는다.
+        delta=1.0
     )
 
-    env.reset()
-    done = False
+    optimizer = keras.optimizers.Adam(
+        learning_rate=0.00025,  # 학습률
+        clipnorm=1.0  # Gradient Clipping
+    )
 
-    obs, info = env.reset()
+    random = np.random.default_rng(SEED)
+    pbar = tqdm(range(EPISODE_MAX), desc='Episode')
+    recent_rewards = []
 
-    while not done:
-        # 환경의 상태와 정보를 활용하여 행동을 선택
-        action = agent.act(obs, info)
+    states, actions, rewards, targets = [], [], [], []
 
-        # 선택된 행동으로 환경과 상호작용하고,
-        # 그로 인해 변화된 상태와 보상 등을 획득
-        obs, reward, terminated, truncated, info = env.step(action)
+    epsilon = 1.0
+    best_reward = -1e5
 
-        # 종료 여부를 확인
-        done = terminated or truncated
+    for i in pbar:
+        epsilon = max(epsilon * EPS_DECAY, EPS_MIN) if i > EPISODE_FULL_EXP else epsilon
 
-    env.close()
+        total_reward = 0.0
 
+        done = False
+        obs, _ = env.reset()
+
+        while not done:
+            state = keras.ops.one_hot(obs, N_STATES)
+            if random.random() < epsilon:
+                action = random.choice(ACTIONS)
+            else:
+                Q = eps_greedy(model, state)
+                action = np.argmax(Q)
+
+            next_obs, _, terminated, truncated, _ = env.step(action)
+
+            done = terminated or truncated
+            reward = reward_func(next_obs, done)
+
+            states.append(state)
+            actions.append(action)
+            rewards.append(reward)
+
+            obs = next_obs
+            total_reward += reward
+
+        G = 0.0
+        for reward in reversed(rewards):
+            G = reward + GAMMA * G
+            targets.append(G)
+
+
+        loss = train_fa(
+            model, optimizer, objective,
+            states=keras.ops.convert_to_tensor(states),
+            actions = keras.ops.one_hot(actions, 4),
+            targets = keras.ops.convert_to_tensor(targets)
+        )
+
+        # 그 다음부터는 지난 시간과 거의 비슷하다.
+        if len(recent_rewards) > EPISODE_MONITOR:
+            del recent_rewards[:1]
+
+        recent_rewards.append(total_reward / len(rewards))
+        avg_reward = np.mean(recent_rewards)
+
+        if avg_reward > best_reward:
+            best_reward = avg_reward
+
+        # 훈련이 잘 되고 있는지 확인하기 위해서
+        # 목적 함수의 값 또한 같이 출력해주겠다.
+        pbar.set_postfix(
+            eps=f'{epsilon:.5f}',
+            avg_reward=f'{avg_reward:.5f}',
+            best_reward=f'{best_reward:.5f}',
+            loss=f'{loss:.5f}'
+        )
+        states.clear()
+        actions.clear()
+        rewards.clear()
+        targets.clear()
+
+
+        if best_reward > EARLY_STOP_AVG_REWARD:
+            break
 
 if __name__ == "__main__":
-    train(phi=1e-2, gamma=0.99, is_value_iter=True, path='./value_agent.pkl')
-    kym.evaluate(
-        env_id='FrozenLake-v1',
-        render_mode='human',
-        desc=CUSTOM_MAP,
-        is_slippery=False,
-        agent=TrainedAgent.load('./value_agent.pkl'),
-    )
-
-    train(phi=1e-2, gamma=0.99, is_value_iter=False, path='./policy_agent.pkl')
-    kym.evaluate(
-        env_id='FrozenLake-v1',
-        render_mode='human',
-        desc=CUSTOM_MAP,
-        is_slippery=False,
-        agent=TrainedAgent.load('./policy_agent.pkl'),
-    )
-
+    monte_carlo_fa()

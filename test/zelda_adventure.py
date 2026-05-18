@@ -1,7 +1,7 @@
 import random
 from typing import Any, Dict
 import kymnasium as kym
-from kymnasium.zelda_adventure import ManualPlayWrapper
+from kymnasium.envs.zelda_adventure import ManualPlayWrapper
 
 
 

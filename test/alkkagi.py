@@ -3,7 +3,7 @@ import random
 from typing import Any, Dict
 import gymnasium as gym
 import kymnasium as kym
-from kymnasium.alkkagi import ManualPlayWrapper, RemoteEnvWrapper
+from kymnasium.envs.alkkagi import ManualPlayWrapper, RemoteEnvWrapper
 
 
 class RandomBlackAgent(kym.Agent):
