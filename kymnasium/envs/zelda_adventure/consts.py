@@ -1,5 +1,5 @@
-import os
 from enum import IntEnum
+from pathlib import Path
 
 FPS = 15
 SCALE = 1.5
@@ -10,7 +10,7 @@ SPRITE_COLOR_KEY = (116, 116, 116)
 TILESET_WIDTH = 10
 
 
-class Colors(IntEnum):
+class Color(IntEnum):
     blue = 1
     red = 2
     green = 3
@@ -19,7 +19,7 @@ class Colors(IntEnum):
     yellow = 6
 
 
-class Objects(IntEnum):
+class Object(IntEnum):
     none = -1
     wall = 0
     water = 1
@@ -39,7 +39,7 @@ class Objects(IntEnum):
     octorok = 15
 
 
-class Actions(IntEnum):
+class Action(IntEnum):
     stay = 0
     turn_left = 1
     turn_right = 2
@@ -81,85 +81,86 @@ class CloudStatus(IntEnum):
 
 
 TILESET_ROW_TO_COLOR = {
-    2: Colors.blue,
-    3: Colors.red,
-    4: Colors.green,
-    5: Colors.emerald,
-    6: Colors.purple,
-    7: Colors.yellow
+    2: Color.blue,
+    3: Color.red,
+    4: Color.green,
+    5: Color.emerald,
+    6: Color.purple,
+    7: Color.yellow
 }
 
 TILESET_BASE_TILES = {
-    -1: Objects.none,
-    0: Objects.wall,
-    1: Objects.water,
-    2: Objects.water,
-    3: Objects.water,
-    4: Objects.water,
-    5: Objects.water,
-    6: Objects.water,
-    7: Objects.water,
-    8: Objects.water,
-    9: Objects.water,
-    10: Objects.link,
-    11: Objects.stair,
-    12: Objects.cloud,
-    13: Objects.fire
+    -1: Object.none,
+    0: Object.wall,
+    1: Object.water,
+    2: Object.water,
+    3: Object.water,
+    4: Object.water,
+    5: Object.water,
+    6: Object.water,
+    7: Object.water,
+    8: Object.water,
+    9: Object.water,
+    10: Object.link,
+    11: Object.stair,
+    12: Object.cloud,
+    13: Object.fire
 }
 
 TILESET_OBJECT_START_ID = 20
 
 TILESET_OBJECTS = {
-    0: Objects.sword,
-    1: Objects.darknut,
-    2: Objects.goriya,
-    3: Objects.wizzrobe,
-    4: Objects.rope,
-    5: Objects.keese,
-    6: Objects.moblin,
-    7: Objects.armos,
-    8: Objects.tektite,
-    9: Objects.octorok,
+    0: Object.sword,
+    1: Object.darknut,
+    2: Object.goriya,
+    3: Object.wizzrobe,
+    4: Object.rope,
+    5: Object.keese,
+    6: Object.moblin,
+    7: Object.armos,
+    8: Object.tektite,
+    9: Object.octorok,
 }
 
 PALETTE_ENEMY = {
-    Colors.blue: [
+    Color.blue: [
         (92, 148, 252),
         (0, 0, 168)
     ],
-    Colors.red: [
+    Color.red: [
         (252, 152, 56),
         (168, 0, 0)
     ],
-    Colors.green: [
+    Color.green: [
         (0, 168, 0),
         (0, 80, 0)
     ],
-    Colors.emerald: [
+    Color.emerald: [
         (88, 248, 152),
         (0, 60, 20)
     ],
-    Colors.purple: [
+    Color.purple: [
         (200, 147, 222),
         (187, 60, 240)
     ],
-    Colors.yellow: [
+    Color.yellow: [
         (240, 188, 60),
         (64, 44, 0)
     ]
 }
 
 PALETTE_SWORD = {
-    Colors.blue: (92, 148, 152),
-    Colors.red: (216, 40, 0),
-    Colors.green: (0, 80, 0),
-    Colors.emerald: (0, 232, 216),
-    Colors.purple: (187, 60, 240),
-    Colors.yellow: (170, 117, 0)
+    Color.blue: (92, 148, 152),
+    Color.red: (216, 40, 0),
+    Color.green: (0, 80, 0),
+    Color.emerald: (0, 232, 216),
+    Color.purple: (187, 60, 240),
+    Color.yellow: (170, 117, 0)
 }
 
-PATH_SPRITE = os.path.join(os.path.dirname(__file__), 'assets', 'sprite.png')
-PATH_TILESET = os.path.join(os.path.dirname(__file__), 'assets', 'tilesets.png')
+ASSET_DIR = Path(__file__).parent / 'assets'
+PATH_SPRITE = ASSET_DIR / 'sprite.png'
+PATH_TILESET = ASSET_DIR / 'tilesets.png'
 
 LINK_ATTACK_CRITICAL_DAMAGE = 1.0
 LINK_ATTACK_NORMAL_DAMAGE = 0.25

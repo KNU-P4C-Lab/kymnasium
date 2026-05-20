@@ -7,13 +7,15 @@ from ...common.manual import ManualPlayWrapper
 
 class AvoidBlurpManualPlayWrapper(ManualPlayWrapper):
     KEY_TO_CONTINUOUS_ACTION = {
-        pygame.K_LEFT: np.array([-MARIO_DEFAULT_MOVING_FORCE]),
-        pygame.K_RIGHT: np.array([MARIO_DEFAULT_MOVING_FORCE]),
+        pygame.K_LEFT: np.array([-1.0, 0.0], dtype=np.float32),
+        pygame.K_RIGHT: np.array([1.0, 0.0], dtype=np.float32),
+        pygame.K_SPACE: np.array([0.0, 1.0], dtype=np.float32),
     }
 
     KEY_TO_DISCRETE_ACTION = {
-        pygame.K_LEFT: Actions.left,
-        pygame.K_RIGHT: Actions.right,
+        pygame.K_LEFT: Action.left_move,
+        pygame.K_RIGHT: Action.right_move,
+        pygame.K_SPACE: Action.jump,
     }
 
     def __init__(self, env, **kwargs):
@@ -31,7 +33,7 @@ class AvoidBlurpManualPlayWrapper(ManualPlayWrapper):
     @property
     def default_action_(self):
         if self._continuous_action:
-            return np.array([0.0])
+            return np.array([0.0, 0.0], dtype=np.float32)
         else:
-            return Actions.noop
+            return Action.noop
 

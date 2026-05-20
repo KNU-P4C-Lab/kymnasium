@@ -26,8 +26,8 @@ class TiledMapData:
 
 
 def load_tile_map_data(
-        path_map: str, tile_size: int, tile_set: pygame.Surface , scale: float
-):
+        path_map: str, tile_size: int, tile_set: pygame.Surface, scale: float
+) -> TiledMapData:
     scaled_tile_size = tile_size * scale
     tile_set_width = tile_set.get_width() // scaled_tile_size
     tile_map = np.loadtxt(path_map, delimiter=',').T
@@ -71,7 +71,7 @@ class Sprite(pygame.sprite.Sprite):
         pass
 
     @property
-    def bb_(self):
+    def bb_(self) -> tuple[int, int, int, int]:
         return self.rect.left, self.rect.top, self.rect.right, self.rect.bottom
 
 

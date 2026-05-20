@@ -25,11 +25,10 @@ class Stone:
 
         self.active = True
 
-    def draw(self, surface: pygame.Surface):
+    def draw(self, surface: pygame.Surface, font: pygame.font.Font):
         if not self.active:
             return
 
-        font = pygame.font.SysFont(None, 24)
         if self._player == PLAYER_BLACK:
             pygame.draw.circle(surface, Color.BLACK, self._body.position, Stone.RADIUS)  # Black
             text_surface = font.render(str(self._index), True, Color.WHITE)

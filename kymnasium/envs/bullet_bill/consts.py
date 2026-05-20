@@ -1,15 +1,7 @@
-import os
 from enum import IntEnum
+from pathlib import Path
 
-FPS = 60
-SCALE = 3.0
-TILE_SIZE = 16
-GAME_TILE_SIZE = int(TILE_SIZE * SCALE)
-STATUS_HEIGHT = 50
-SPRITE_COLOR_KEY = (146, 144, 255)
-
-
-class Ids(IntEnum):
+class SpriteId(IntEnum):
     mario = 0
     star = 26
     land = 32
@@ -18,12 +10,18 @@ class Ids(IntEnum):
     empty_block = 35
 
 
-class Actions(IntEnum):
+class Action(IntEnum):
     noop = 0
     left = 1
     right = 2
     jump = 3
 
+FPS = 60
+SCALE = 3.0
+TILE_SIZE = 16
+GAME_TILE_SIZE = int(TILE_SIZE * SCALE)
+STATUS_HEIGHT = 50
+SPRITE_COLOR_KEY = (146, 144, 255)
 
 MARIO_IDLE_THRESHOLD = 10.0
 MARIO_GROUND_MAX_SPEED = 750.0
@@ -61,7 +59,8 @@ BULLET_BILL_MAX_SPEED = 300.0
 BULLET_BILL_FALLEN_SPEED = 700.0
 STAR_ANIM_INTERVAL = 0.05
 
-PATH_SPRITE = os.path.join(os.path.dirname(__file__), 'assets', 'sprite.png')
+ASSET_DIR = Path(__file__).parent / 'assets'
+PATH_SPRITE = ASSET_DIR / 'sprite.png'
 FILE_OBJECT = '_object.csv'
 FILE_BACKGROUND = '_background.csv'
 

@@ -1,8 +1,13 @@
 import pygame
 from typing import Tuple
 from .consts import *
-from kymnasium.common.util import load_sprite, swap_colors
-from kymnasium.common.sprite import TiledSprite
+from ...common.util import load_sprite, swap_colors
+from ...common.sprite import TiledSprite
+
+
+LinkImages = dict[tuple, list[pygame.Surface]]
+EnemyImages = dict[Directions, list[pygame.Surface]]
+CloudImages = list[pygame.Surface]
 
 
 class ZeldaSprite(TiledSprite):
@@ -13,7 +18,7 @@ class ZeldaSprite(TiledSprite):
 class Link(ZeldaSprite):
     def __init__(
             self,
-            sprite: pygame.Surface,
+            images: LinkImages,
             position: Tuple[int, int]
     ):
         super().__init__()
@@ -29,6 +34,15 @@ class Link(ZeldaSprite):
         self._action_idx = 0
         self._action_timer = 0
 
+        self._images = images
+        self.image = self._images[(self._direction, self._status)][0]
+        self.set_rect(
+            x=self._position[0],
+            y=self._position[1]
+        )
+
+    @staticmethod
+    def load_images(sprite: pygame.Surface) -> LinkImages:
         images = dict()
         mapper = {
             (Directions.down, LinkStatus.normal, False): (LINK_OFFSET_DOWN_IDLE, False),
@@ -62,13 +76,8 @@ class Link(ZeldaSprite):
                     ]
             else:
                 images[(direction, status)] = frames
-        self._images = images
 
-        self.image = self._images[(self._direction, self._status)][0]
-        self.set_rect(
-            x=self._position[0],
-            y=self._position[1]
-        )
+        return images
 
     @property
     def direction_(self):
@@ -99,11 +108,11 @@ class Link(ZeldaSprite):
 
     def turn_left(self):
         self._stop_action()
-        self._direction = (self._direction + 1) % len(Directions)
+        self._direction = (self._direction - 1) % len(Directions)
 
     def turn_right(self):
         self._stop_action()
-        self._direction = (self._direction - 1) % len(Directions)
+        self._direction = (self._direction + 1) % len(Directions)
 
     def move_forward(self, front_obj: pygame.sprite.Sprite | None):
         self._stop_action()
@@ -248,26 +257,34 @@ class Stair(ZeldaSprite):
 class Cloud(ZeldaSprite):
     def __init__(
             self,
-            sprite: pygame.Surface,
+            images: CloudImages,
             position: Tuple[int, int],
     ):
         super().__init__()
 
-        size = TILE_SIZE, TILE_SIZE
         self._position = position
         self._counter = 0
 
-        self._images = [
-            load_sprite(sprite, size, offset, False, scale=SCALE)
-            for offset in CLOUD_OFFSET
-        ]
+        self._images = images
         self._status = CloudStatus.disappeared
         self.image = self._images[0]
         self.set_rect(x=position[0], y=position[1])
 
+    @staticmethod
+    def load_images(sprite: pygame.Surface) -> CloudImages:
+        size = TILE_SIZE, TILE_SIZE
+        return [
+            load_sprite(sprite, size, offset, False, scale=SCALE)
+            for offset in CLOUD_OFFSET
+        ]
+
     @property
     def status_(self):
         return self._status
+
+    @property
+    def position_(self):
+        return self._position
 
     @property
     def passable_(self):
@@ -331,7 +348,7 @@ class Sword(ZeldaSprite):
 
 
 class Enemy(ZeldaSprite):
-    obj: int = Objects.none
+    obj: int = Object.none
     mapper: dict = None
     default_direction: int = None
     hit_points: float = None
@@ -340,7 +357,7 @@ class Enemy(ZeldaSprite):
 
     def __init__(
             self,
-            sprite: pygame.Surface,
+            images: EnemyImages,
             position: Tuple[int, int],
             color: int,
     ):
@@ -355,24 +372,27 @@ class Enemy(ZeldaSprite):
         self._idle_idx = 0
         self._idle_timer = 0
 
-        self._images = dict()
+        self._images = images
+        self.image = self._images[self._direction][self._idle_idx]
+        self.set_rect(x=position[0], y=position[1])
 
-        for direction, (offsets, flip_x) in self.mapper.items():
+    @classmethod
+    def load_images(cls, sprite: pygame.Surface, color: int) -> EnemyImages:
+        images = dict()
+        for direction, (offsets, flip_x) in cls.mapper.items():
             size = TILE_SIZE, TILE_SIZE
             frames = [
                 load_sprite(sprite, size, offset, flip_x, scale=SCALE)
                 for offset in offsets
             ]
-            palette = list(zip(PALETTE_ENEMY[Colors.blue], PALETTE_ENEMY[self._color]))
+            palette = list(zip(PALETTE_ENEMY[Color.blue], PALETTE_ENEMY[color]))
             frames = [
                 swap_colors(
                     frame, palette
                 ) for frame in frames
             ]
-            self._images[direction] = frames
-
-        self.image = self._images[self._direction][self._idle_idx]
-        self.set_rect(x=position[0], y=position[1])
+            images[direction] = frames
+        return images
 
     @property
     def status_(self):
@@ -416,7 +436,7 @@ class Enemy(ZeldaSprite):
 
 
 class Darknut(Enemy):
-    obj = Objects.darknut
+    obj = Object.darknut
     mapper = {
         Directions.down: (DARKNUT_OFFSET_DOWN, False),
         Directions.right: (DARKNUT_OFFSET_RIGHT, False),
@@ -429,7 +449,7 @@ class Darknut(Enemy):
 
 
 class Goriya(Enemy):
-    obj = Objects.goriya
+    obj = Object.goriya
     mapper = {
         Directions.down: (GORIYA_OFFSET_DOWN, False),
         Directions.right: (GORIYA_OFFSET_RIGHT, False),
@@ -441,7 +461,7 @@ class Goriya(Enemy):
 
 
 class Wizzrobe(Enemy):
-    obj = Objects.wizzrobe
+    obj = Object.wizzrobe
     mapper = {
         Directions.down: (WIZZROBE_OFFSET_DOWN, False),
         Directions.up: (WIZZROBE_OFFSET_UP, False)
@@ -451,7 +471,7 @@ class Wizzrobe(Enemy):
 
 
 class Rope(Enemy):
-    obj = Objects.rope
+    obj = Object.rope
     mapper = {
         Directions.right: (ROPE_OFFSET_RIGHT, False),
         Directions.left: (ROPE_OFFSET_RIGHT, True)
@@ -461,7 +481,7 @@ class Rope(Enemy):
 
 
 class Moblin(Enemy):
-    obj = Objects.moblin
+    obj = Object.moblin
     mapper = {
         Directions.down: (MOBLIN_OFFSET_DOWN, False),
         Directions.right: (MOBLIN_OFFSET_RIGHT, False),
@@ -473,7 +493,7 @@ class Moblin(Enemy):
 
 
 class Armos(Enemy):
-    obj = Objects.armos
+    obj = Object.armos
     mapper = {
         Directions.down: (ARMOS_OFFSET_DOWN, False),
         Directions.up: (ARMOS_OFFSET_UP, False),
@@ -485,7 +505,7 @@ class Armos(Enemy):
 
 
 class Octorok(Enemy):
-    obj = Objects.octorok
+    obj = Object.octorok
     mapper = {
         Directions.down: (OCTOROK_OFFSET, False),
     }
@@ -494,7 +514,7 @@ class Octorok(Enemy):
 
 
 class Keese(Enemy):
-    obj = Objects.keese
+    obj = Object.keese
     mapper = {
         Directions.down: (KEESE_OFFSET, False),
     }
@@ -503,7 +523,7 @@ class Keese(Enemy):
 
 
 class Tektite(Enemy):
-    obj = Objects.tektite
+    obj = Object.tektite
     mapper = {
         Directions.down: (TEKTITE_OFFSET, False),
     }

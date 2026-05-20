@@ -1,7 +1,6 @@
 from typing import Tuple, List, Literal
 import numpy as np
 import pygame
-import pygame.freetype
 import gymnasium as gym
 from .objs import Mario, BulletBill, Star, WorldObjects
 from .consts import *
@@ -24,13 +23,15 @@ class BulletBillEnv(gym.Env):
             max_spawns: int,
             stage: int = 1,
             continuous_action: bool = False,
-            max_spawn_duration: float = None,
+            max_spawn_duration: float = 0.0,
             frame_skip: int = 4,
-            render_mode: RenderMode = None,
-            obs_type: ObsType = None
+            render_mode: RenderMode = 'human',
+            obs_type: ObsType = 'default',
+            seed: int | None = None
     ):
         self.render_mode = render_mode
-        self.obs_type = obs_type or 'default'
+        self.obs_type = obs_type
+        self.should_render = self.render_mode != 'none' or self.obs_type == 'image'
         self.stage = stage
         self.continuous_action = continuous_action
         self.max_spawn_duration = min(max_spawn_duration, game_duration) if max_spawn_duration else game_duration
@@ -40,7 +41,9 @@ class BulletBillEnv(gym.Env):
         self.min_spawn_interval = min_spawn_interval
         self.max_spawns = max_spawns
 
-        self._random = np.random.default_rng()
+        self._seed = seed
+        self._random = np.random.default_rng(self._seed)
+
         self._time_elapsed = 0
         self._timer = 0
         self._spawn_interval = init_spawn_interval
@@ -53,27 +56,32 @@ class BulletBillEnv(gym.Env):
             (sprite.get_width() * SCALE, sprite.get_height() * SCALE)
         )
         self._sprite = sprite
+        self._mario_images = Mario.load_images(sprite)
+        self._bullet_bill_images = BulletBill.load_images(sprite)
+        self._star_images = Star.load_images(sprite)
 
         self._screen = None
         self._game_surface = None
         self._status_surface = None
+        self._font = None
         self._clock = pygame.time.Clock()
 
         self._background_map = load_tile_map_data(
-            os.path.join(os.path.dirname(__file__), 'assets', f'stage-{self.stage}{FILE_BACKGROUND}'),
+            str(ASSET_DIR / f'stage-{self.stage}{FILE_BACKGROUND}'),
             TILE_SIZE,
             self._sprite,
             SCALE
         )
 
         self._object_map = load_tile_map_data(
-            os.path.join(os.path.dirname(__file__), 'assets', f'stage-{self.stage}{FILE_OBJECT}'),
+            str(ASSET_DIR / f'stage-{self.stage}{FILE_OBJECT}'),
             TILE_SIZE,
             self._sprite,
             SCALE
         )
 
         self.width, self.height = self._background_map.width, self._background_map.height
+        self._screen_size = (self.width, self.height)
 
         self._character_sprites = Group()
         self._background_sprites = Group()
@@ -83,8 +91,15 @@ class BulletBillEnv(gym.Env):
         self._bullet_bills: List[BulletBill] = []
         self._stars: List[Star] = []
         self._platforms: List[WorldObjects] = []
+        self._platform_grid: dict[tuple[int, int], WorldObjects] = {}
+        self._nearby_platform_cache_key: tuple[int, int, int, int] | None = None
+        self._nearby_platform_cache: List[WorldObjects] = []
+        self._mario_spawn_position: Tuple[int, int] | None = None
+        self._star_spawn_positions: List[Tuple[int, int]] = []
 
-        self._n_star = sum([tile.identifier == Ids.star for tile in self._object_map.tiles])
+        self._n_star = sum([tile.identifier == SpriteId.star for tile in self._object_map.tiles])
+        self._build_static_stage()
+        self._reset_dynamic_stage()
 
         if self.obs_type == 'default':
             self.observation_space = gym.spaces.Dict({
@@ -94,17 +109,22 @@ class BulletBillEnv(gym.Env):
             })
         else:
             self.observation_space = gym.spaces.Box(low=0, high=255, shape=(self.height, self.width, 3), dtype=np.uint8)
+
         if self.continuous_action:
-            self.action_space = gym.spaces.Box(low=-np.inf, high=np.inf, shape=(2,))
+            self.action_space = gym.spaces.Box(
+                low=np.array([-1.0, 0.0], dtype=np.float32),
+                high=np.array([1.0, 1.0], dtype=np.float32),
+                shape=(2,),
+                dtype=np.float32,
+            )
         else:
-            self.action_space = gym.spaces.Discrete(4)
+            self.action_space = gym.spaces.Discrete(len(Action))
 
     def render(self):
-        if self.render_mode == 'none':
+        if not self.should_render:
             return None
 
-        fps = self.metadata["render_fps"]
-        dt = 1.0 / fps
+        dt = 1.0 / FPS
 
         if self._screen is None:
             pygame.init()
@@ -113,11 +133,13 @@ class BulletBillEnv(gym.Env):
                 self._screen = pygame.display.set_mode((self.width, self.height + STATUS_HEIGHT))
                 pygame.display.set_caption(self.spec.id)
             else:
-                self._screen = pygame.Surface((self.width, self.width + STATUS_HEIGHT), pygame.SRCALPHA)
+                self._screen = pygame.Surface((self.width, self.height + STATUS_HEIGHT), pygame.SRCALPHA)
             self._game_surface = self._screen.subsurface((0, 0, self.width, self.height))
             self._status_surface = self._screen.subsurface((0, self.height, self.width, STATUS_HEIGHT))
 
         self._character_sprites.update(dt)
+
+        assert self._game_surface is not None, "Game surface must be initialized before rendering"
 
         self._game_surface.fill(Color.SKY_BLUE)
 
@@ -134,7 +156,7 @@ class BulletBillEnv(gym.Env):
 
         if self.render_mode == "human":
             pygame.event.pump()
-            self._clock.tick(fps)
+            self._clock.tick(FPS)
             pygame.display.flip()
             return None
         return None
@@ -147,9 +169,13 @@ class BulletBillEnv(gym.Env):
     def reset(self, **kwargs):
         super().reset(**kwargs)
 
+        seed = kwargs.get('seed')
+        if seed is not None:
+            self._random = np.random.default_rng(seed)
+        else:
+            self._random = np.random.default_rng(self._seed)
+
         self._character_sprites.empty()
-        self._background_sprites.empty()
-        self._static_sprites.empty()
 
         self._mario = None
         self._bullet_bills.clear()
@@ -159,22 +185,25 @@ class BulletBillEnv(gym.Env):
         self._timer = 0
         self._spawn_interval = self.init_spawn_interval
 
-        self._build_stage()
+        self._reset_dynamic_stage()
         self._game_state = 'playing'
 
-        self.render()
+        if self.should_render:
+            self.render()
 
-        return self._generate_obs(), dict()
+        return self._generate_obs(), self._generate_info()
 
     def step(self, action):
-        obs, reward, terminated, truncated, info = None, 0.0, False, False, {}
+        action_force = self._action_to_force(action)
 
         for _ in range(self.frame_skip):
-            obs, reward, terminated, truncated, info = self._step_internal(action)
-            if terminated or truncated:
+            if self._step_internal(action_force):
                 break
 
-        return obs, reward, terminated, truncated, info
+        terminated = self._game_state == 'cleared'
+        truncated = self._game_state == 'game_over'
+
+        return self._generate_obs(), 0.0, terminated, truncated, self._generate_info()
 
     def close(self):
         if self._screen is not None:
@@ -182,40 +211,90 @@ class BulletBillEnv(gym.Env):
 
         pygame.quit()
 
-    def _build_stage(self):
+    def _action_to_force(self, action) -> Tuple[float, float]:
+        if self.continuous_action:
+            return float(action[0] * MARIO_MAX_MOVING_FORCE), -float(action[1] * MARIO_JUMPING_FORCE)
+
+        if action == Action.left:
+            return -MARIO_DEFAULT_MOVING_FORCE, 0.0
+        if action == Action.right:
+            return MARIO_DEFAULT_MOVING_FORCE, 0.0
+        if action == Action.jump:
+            return 0.0, -MARIO_JUMPING_FORCE
+        return 0.0, 0.0
+
+    def _build_static_stage(self):
         for tile in self._background_map.tiles:
             background = WorldObjects(tile.sprite,  (tile.x, tile.y))
             self._background_sprites.add(background)
 
         for tile in self._object_map.tiles:
-            if tile.identifier == Ids.mario:
-                self._mario = Mario(
-                    sprite=self._sprite,
-                    position=(tile.x, tile.y)
-                )
-                self._character_sprites.add(self._mario)
-            elif tile.identifier == Ids.star:
-                star = Star(
-                    self._sprite, (tile.x, tile.y)
-                )
-                self._character_sprites.add(star)
-                self._stars.append(star)
+            if tile.identifier == SpriteId.mario:
+                self._mario_spawn_position = (tile.x, tile.y)
+            elif tile.identifier == SpriteId.star:
+                self._star_spawn_positions.append((tile.x, tile.y))
             else:
                 platform = WorldObjects(tile.sprite, (tile.x, tile.y))
                 self._static_sprites.add(platform)
                 self._platforms.append(platform)
+                self._platform_grid[(tile.grid_x, tile.grid_y)] = platform
+
+        if self._mario_spawn_position is None:
+            raise ValueError(f"stage {self.stage} does not define a Mario spawn tile")
+
+    def _nearby_platforms(self) -> List[WorldObjects]:
+        assert self._mario is not None
+
+        rect = self._mario.rect
+        margin_tiles = 2
+        min_x = max(0, rect.left // GAME_TILE_SIZE - margin_tiles)
+        max_x = min((self.width - 1) // GAME_TILE_SIZE, rect.right // GAME_TILE_SIZE + margin_tiles)
+        min_y = max(0, rect.top // GAME_TILE_SIZE - margin_tiles)
+        max_y = min((self.height - 1) // GAME_TILE_SIZE, rect.bottom // GAME_TILE_SIZE + margin_tiles)
+        cache_key = (min_x, max_x, min_y, max_y)
+
+        if cache_key == self._nearby_platform_cache_key:
+            return self._nearby_platform_cache
+
+        platforms = []
+        for grid_x in range(min_x, max_x + 1):
+            for grid_y in range(min_y, max_y + 1):
+                platform = self._platform_grid.get((grid_x, grid_y))
+                if platform is not None:
+                    platforms.append(platform)
+        self._nearby_platform_cache_key = cache_key
+        self._nearby_platform_cache = platforms
+        return platforms
+
+    def _reset_dynamic_stage(self):
+        assert self._mario_spawn_position is not None
+
+        self._nearby_platform_cache_key = None
+        self._mario = Mario(
+            images=self._mario_images,
+            position=self._mario_spawn_position,
+        )
+        self._character_sprites.add(self._mario)
+
+        for position in self._star_spawn_positions:
+            star = Star(self._star_images, position)
+            self._character_sprites.add(star)
+            self._stars.append(star)
 
     def _spawn_bullet_bill(self):
+        assert self._mario is not None
+
         if len(self._bullet_bills) >= self.max_spawns:
             return
 
-        target_y = self._random.uniform(-GAME_TILE_SIZE * 3, GAME_TILE_SIZE * 3) + self._mario.bb_[1]
-        target_y = np.clip(target_y, 0, self._mario.bb_[1])
-        is_left = bool(self._random.choice([True, False]))
+        mario_top = self._mario.rect.top
+        target_y = self._random.uniform(-GAME_TILE_SIZE * 3, GAME_TILE_SIZE * 3) + mario_top
+        target_y = max(0, min(mario_top, target_y))
+        is_left = self._random.random() < 0.5
         x = -GAME_TILE_SIZE if is_left else self.width
         speed = self._random.uniform(BULLET_BILL_MIN_SPEED, BULLET_BILL_MAX_SPEED)
         bullet_bill = BulletBill(
-            sprite=self._sprite,
+            images=self._bullet_bill_images,
             position=(x, target_y),
             velocity=speed if is_left else -speed,
             flip=is_left,
@@ -224,25 +303,49 @@ class BulletBillEnv(gym.Env):
         self._character_sprites.add(bullet_bill)
 
     def _generate_obs(self):
+        assert self._mario is not None, "Mario must be initialized before generating observations"
+
         if self.obs_type == 'image':
             return self.get_frame()
         elif self.obs_type == 'default':
-            mario = np.array((
-                *self._mario.bb_, *self._mario.velocity_,
-                1 if self._mario.invincible_ else 0, 1 if self._mario.jumping_ else 0
-            ), dtype=np.float32)
+            mario = np.empty(shape=(8,), dtype=np.float32)
+            mario_rect = self._mario.rect
+            mario_velocity = self._mario.velocity_
+            mario[0] = mario_rect.left
+            mario[1] = mario_rect.top
+            mario[2] = mario_rect.right
+            mario[3] = mario_rect.bottom
+            mario[4] = mario_velocity.x
+            mario[5] = mario_velocity.y
+            mario[6] = 1 if self._mario.invincible_ else 0
+            mario[7] = 1 if self._mario.jumping_ else 0
 
             bullets = np.zeros(shape=(self.max_spawns, 5), dtype=np.float32)
-            bullets_active = [bullet for bullet in self._bullet_bills if bullet.state_ == 'active']
 
-            for i, bullet in enumerate(bullets_active):
-                bullets[i] = (*bullet.bb_, bullet.velocity_)
+            i = 0
+            for bullet in self._bullet_bills:
+                if bullet.state_ != 'active':
+                    continue
+                rect = bullet.rect
+                bullets[i, 0] = rect.left
+                bullets[i, 1] = rect.top
+                bullets[i, 2] = rect.right
+                bullets[i, 3] = rect.bottom
+                bullets[i, 4] = bullet.velocity_
+                i += 1
 
             stars = np.zeros(shape=(self._n_star, 4), dtype=np.float32)
-            stars_active = [star for star in self._stars if star.active_]
 
-            for i, star in enumerate(stars_active):
-                stars[i] = (*star.bb_, )
+            i = 0
+            for star in self._stars:
+                if not star.active_:
+                    continue
+                rect = star.rect
+                stars[i, 0] = rect.left
+                stars[i, 1] = rect.top
+                stars[i, 2] = rect.right
+                stars[i, 3] = rect.bottom
+                i += 1
 
             return {
                 "mario": mario,
@@ -259,35 +362,27 @@ class BulletBillEnv(gym.Env):
             text: str,
             color: Tuple[int, int, int],
     ):
-        font = pygame.font.SysFont(pygame.font.get_default_font(), 30)
-        text = font.render(text, True, color)
-        surface_width, surface_height = self._status_surface.get_size()
-        text_width, text_height = text.get_size()
+        if self._font is None:
+            self._font = pygame.font.SysFont(pygame.font.get_default_font(), 30)
+        text = self._font.render(text, True, color)
+        _, surface_height = self._status_surface.get_size()
+        _, text_height = text.get_size()
         self._status_surface.fill(Color.WHITE)
         self._status_surface.blit(text, (10, ((surface_height - text_height) // 2)))
 
-    def _step_internal(self, action):
-        fps = self.metadata["render_fps"]
-        dt = 1.0 / fps
+    def _step_internal(self, action: Tuple[float, float]):
+        assert self._mario is not None
+
+        dt = 1.0 / FPS
 
         self._timer += dt
         self._time_elapsed += dt
 
         if self._time_elapsed >= self.game_duration:
             self._game_state = 'cleared'
-            self.render()
-            return self._generate_obs(), 0.0, True, False, dict()
-
-        if not self.continuous_action:
-            walk_force, jump_force = 0.0, 0.0
-            if action == Actions.left:
-                walk_force = -MARIO_DEFAULT_MOVING_FORCE
-            elif action == Actions.right:
-                walk_force = MARIO_DEFAULT_MOVING_FORCE
-            elif action == Actions.jump:
-                jump_force = -MARIO_JUMPING_FORCE
-
-            action = (walk_force, jump_force)
+            if self.should_render:
+                    self.render()
+            return True
 
         self._mario.apply_force(action)
 
@@ -299,27 +394,37 @@ class BulletBillEnv(gym.Env):
                 self.min_spawn_interval / self.init_spawn_interval
         ) ** (self._time_elapsed / self.max_spawn_duration)
 
-        self._character_sprites.tick_frame(dt=dt, screen_size=(self.width, self.height), platforms=self._platforms)
+        self._mario.tick_frame(dt=dt, screen_size=self._screen_size, platforms=self._nearby_platforms())
+        for bullet in self._bullet_bills:
+            bullet.tick_frame(dt=dt, screen_size=self._screen_size)
 
         self._mario.check_star_collision(self._stars)
         self._mario.check_bullet_collision(self._bullet_bills)
 
-        bullets_oob = [bullet for bullet in self._bullet_bills if bullet.state_ == 'oob']
-        for bullet in bullets_oob:
-            bullet.kill()
-            self._bullet_bills.remove(bullet)
+        active_bullets = []
+        for bullet in self._bullet_bills:
+            if bullet.state_ == 'oob':
+                bullet.kill()
+            else:
+                active_bullets.append(bullet)
+        self._bullet_bills = active_bullets
 
-        stars_inactive = [star for star in self._stars if not star.active_]
-        for star in stars_inactive:
-            star.kill()
-            self._stars.remove(star)
+        active_stars = []
+        for star in self._stars:
+            if star.active_:
+                active_stars.append(star)
+            else:
+                star.kill()
+        self._stars = active_stars
 
         if not self._mario.active_:
             self._game_state = 'game_over'
+            if self.should_render:
+                self.render()
+            return True
 
-        self.render()
+        if self.should_render:
+            self.render()
 
-        if self._game_state == 'playing':
-            return self._generate_obs(), 0.0, False, False, self._generate_info()
-        else:
-            return self._generate_obs(), 0.0, False, True, self._generate_info()
+        return False
+

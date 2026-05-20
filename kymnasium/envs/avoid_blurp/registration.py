@@ -1,12 +1,12 @@
-import os
 from typing import Literal
 import gymnasium as gym
+from .consts import ASSET_DIR
 from .env import AvoidBlurpEnv
 from ...common.util import play_bgm
 from ...common.types import ObsType
 
 
-_BGM_PATH = os.path.join(os.path.dirname(__file__), 'assets', 'bgm.ogg')
+_BGM_PATH = ASSET_DIR / 'bgm.ogg'
 
 
 def _create_env(
@@ -21,6 +21,7 @@ def _create_env(
         continuous_action: bool = False,
         mode: Literal['vertical', 'ballistic'] = 'vertical',
         stage: int = 1,
+        seed: int | None = None,
         **kwargs
 ) -> gym.Env:
     if bgm:
@@ -37,6 +38,7 @@ def _create_env(
         mode=mode,
         stage=stage,
         obs_type=obs_type,
+        seed=seed,
         **kwargs
     )
     return env

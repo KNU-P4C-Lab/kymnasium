@@ -20,7 +20,7 @@ class RandomAgent(kym.Agent):
 
 def manual_play():
     agent = ManualPlayWrapper(
-        env='kymnasium/ZeldaAdventure-Stage-3',
+        env='kymnasium/ZeldaAdventure-Stage-2',
         render_mode='human',
         debug=True,
         bgm=True

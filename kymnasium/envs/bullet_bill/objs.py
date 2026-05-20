@@ -1,15 +1,18 @@
 import pygame
-import numpy as np
 from typing import Tuple, List, Literal
 from .consts import *
-from kymnasium.common.util import load_sprite, swap_colors
-from kymnasium.common.sprite import Sprite
+from ...common.util import load_sprite, swap_colors
+from ...common.sprite import Sprite
+
+MarioImages = dict[str, pygame.Surface | list[pygame.Surface]]
+BulletBillImages = dict[bool, pygame.Surface]
+StarImages = list[pygame.Surface]
 
 
 class Mario(Sprite):
     def __init__(
             self,
-            sprite: pygame.Surface,
+            images: MarioImages,
             position: Tuple[int, int]
     ):
         super().__init__()
@@ -27,6 +30,12 @@ class Mario(Sprite):
 
         self._velocity = pygame.Vector2(0, 0)
 
+        self._images = images
+        self.image = self._images['right_stand/0']
+        self.rect = self.image.get_rect(x=position[0], y=position[1])
+
+    @staticmethod
+    def load_images(sprite: pygame.Surface) -> MarioImages:
         images = dict()
         mapper = {
             'right_stand': (OFFSET_MARIO_STAND, False),
@@ -80,9 +89,7 @@ class Mario(Sprite):
                     else:
                         images[f'{key}/{i}'] = swap_colors(frame, swap)
 
-        self._images = images
-        self.image = self._images['right_stand/0']
-        self.rect = self.image.get_rect(x=position[0], y=position[1])
+        return images
 
     @property
     def velocity_(self):
@@ -104,19 +111,20 @@ class Mario(Sprite):
         fx, fy = force
 
         if self._is_grounded:
-            self._velocity.x += np.clip(fx, -MARIO_MAX_MOVING_FORCE, MARIO_MAX_MOVING_FORCE)
+            fx = max(-MARIO_MAX_MOVING_FORCE, min(MARIO_MAX_MOVING_FORCE, float(fx)))
         else:
-            self._velocity.x += np.clip(fx, -MARIO_MAX_FLOATING_FORCE, MARIO_MAX_FLOATING_FORCE)
+            fx = max(-MARIO_MAX_FLOATING_FORCE, min(MARIO_MAX_FLOATING_FORCE, float(fx)))
+        self._velocity.x += fx
 
         if self._is_grounded and fy < 0:
-            self._velocity.y = fy
+            self._velocity.y = max(-MARIO_JUMPING_FORCE, min(0, float(fy)))
             self._is_grounded = False
 
     def tick_frame(self, dt: float, screen_size: Tuple[int, int], platforms: List['WorldObjects'], *args, **kwargs):
         if self._is_grounded:
-            self._velocity.x = np.clip(self._velocity.x, -MARIO_GROUND_MAX_SPEED, MARIO_GROUND_MAX_SPEED)
+            self._velocity.x = max(-MARIO_GROUND_MAX_SPEED, min(MARIO_GROUND_MAX_SPEED, self._velocity.x))
         else:
-            self._velocity.x = np.clip(self._velocity.x, -MARIO_AIR_MAX_SPEED, MARIO_AIR_MAX_SPEED)
+            self._velocity.x = max(-MARIO_AIR_MAX_SPEED, min(MARIO_AIR_MAX_SPEED, self._velocity.x))
         self._velocity.y += MARIO_GRAVITY * dt
 
         if self._velocity.x > 0:
@@ -231,7 +239,7 @@ class Mario(Sprite):
 class BulletBill(Sprite):
     def __init__(
             self,
-            sprite: pygame.Surface,
+            images: BulletBillImages,
             position: Tuple[float, float],
             velocity: float,
             flip: bool = False
@@ -240,8 +248,15 @@ class BulletBill(Sprite):
 
         self._velocity = velocity
         self._state: Literal['active', 'oob', 'fallen'] = 'active'
-        self.image = load_sprite(sprite, (TILE_SIZE, TILE_SIZE), OFFSET_BULLET_BILL, flip, scale=SCALE)
+        self.image = images[flip]
         self.rect = self.image.get_rect(x=position[0], y=position[1])
+
+    @staticmethod
+    def load_images(sprite: pygame.Surface) -> BulletBillImages:
+        return {
+            False: load_sprite(sprite, (TILE_SIZE, TILE_SIZE), OFFSET_BULLET_BILL, False, scale=SCALE),
+            True: load_sprite(sprite, (TILE_SIZE, TILE_SIZE), OFFSET_BULLET_BILL, True, scale=SCALE),
+        }
 
     @property
     def velocity_(self):
@@ -277,7 +292,7 @@ class BulletBill(Sprite):
 class Star(Sprite):
     def __init__(
             self,
-            sprite: pygame.Surface,
+            images: StarImages,
             position: Tuple[int, int]
     ):
         super().__init__()
@@ -286,13 +301,17 @@ class Star(Sprite):
         self._anim_timer = 0
         self._active = True
 
-        self._images = [
-            load_sprite(sprite, (TILE_SIZE, TILE_SIZE), offset, scale=SCALE)
-            for offset in OFFSET_STAR
-        ]
+        self._images = images
 
         self.image = self._images[0]
         self.rect = self.image.get_rect(x=position[0], y=position[1])
+
+    @staticmethod
+    def load_images(sprite: pygame.Surface) -> StarImages:
+        return [
+            load_sprite(sprite, (TILE_SIZE, TILE_SIZE), offset, scale=SCALE)
+            for offset in OFFSET_STAR
+        ]
 
     @property
     def active_(self):

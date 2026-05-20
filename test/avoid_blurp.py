@@ -21,9 +21,10 @@ class RandomAgent(kym.Agent):
 def manual_play():
     agent = ManualPlayWrapper(
         'kymnasium/AvoidBlurp-Discrete-Ballistic-Normal-Stage-1',
-        debug=False,
+        debug=True,
         render_mode='human',
-        bgm=True
+        bgm=True,
+        seed=42
     )
     agent.play()
 

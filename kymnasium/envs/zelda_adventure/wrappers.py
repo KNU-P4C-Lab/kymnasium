@@ -6,13 +6,13 @@ from ...common.manual import ManualPlayWrapper
 
 class ZeldaAdventureEnvManualPlayWrapper(ManualPlayWrapper):
     KEY_TO_DISCRETE_ACTION = {
-        pygame.K_LEFT: Actions.turn_left,
-        pygame.K_RIGHT: Actions.turn_right,
-        pygame.K_UP: Actions.move_forward,
-        pygame.K_q: Actions.attack,
-        pygame.K_w: Actions.pick_up,
-        pygame.K_e: Actions.drop,
-        pygame.K_r: Actions.stay,
+        pygame.K_LEFT: Action.turn_left,
+        pygame.K_RIGHT: Action.turn_right,
+        pygame.K_UP: Action.move_forward,
+        pygame.K_q: Action.attack,
+        pygame.K_w: Action.pick_up,
+        pygame.K_e: Action.drop,
+        pygame.K_r: Action.stay,
     }
 
     def __init__(self, env, *args, **kwargs):

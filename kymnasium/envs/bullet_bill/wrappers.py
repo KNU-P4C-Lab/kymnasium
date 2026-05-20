@@ -13,9 +13,9 @@ class BulletBillManualPlayWrapper(ManualPlayWrapper):
     }
 
     KEY_TO_DISCRETE_ACTION = {
-        pygame.K_LEFT: Actions.left,
-        pygame.K_RIGHT: Actions.right,
-        pygame.K_SPACE: Actions.jump
+        pygame.K_LEFT: Action.left,
+        pygame.K_RIGHT: Action.right,
+        pygame.K_SPACE: Action.jump
     }
 
     def __init__(self, env, *args, **kwargs):
@@ -35,4 +35,4 @@ class BulletBillManualPlayWrapper(ManualPlayWrapper):
         if self._continuous_action:
             return np.array([0.0, 0.0])
         else:
-            return Actions.noop
+            return Action.noop

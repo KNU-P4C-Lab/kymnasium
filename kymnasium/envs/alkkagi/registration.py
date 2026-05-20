@@ -1,17 +1,17 @@
-import os
 from .env import AlkkagiEnv
 from .wrappers import RGBImgObsWrapper
+from .consts import ASSET_DIR
 from ...common.util import play_bgm
 from ...common.types import ObsType
 
 
-_BGM_PATH = os.path.join(os.path.dirname(__file__), 'assets', 'bgm.ogg')
+_BGM_PATH = ASSET_DIR / 'bgm.ogg'
 
 def _create_env(
         n_stones: int,
         n_obstacles: int,
         bgm: bool = False,
-        obs_type: ObsType = 'custom',
+        obs_type: ObsType = 'default',
         **kwargs
 ):
     if bgm:
@@ -20,6 +20,7 @@ def _create_env(
     env = AlkkagiEnv(
         n_stones=n_stones,
         n_obstacles=n_obstacles,
+        obs_type=obs_type,
         **kwargs
     )
 

@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.12 (rl-env)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="WSL (Ubuntu): (/home/woohyeokchoi/miniconda3/envs/kymnasium/bin/python)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="SSH (sftp://p4clab@10.11.60.54:2222/home/p4clab/miniconda3/envs/kymnasium/bin/python)" project-jdk-type="Python SDK" />
 </project>

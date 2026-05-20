@@ -7,19 +7,28 @@ import random
 import math
 from .consts import *
 from .objs import Stone, Obstacle, SlingShot
-from kymnasium.common.color import Color
+from ...common.color import Color
+from ...common.types import RenderMode, ObsType
 
 
 class AlkkagiEnv(gym.Env):
     metadata = {
-        'render_modes': ['human', 'rgb_array'],
-        'render_fps': 60,
+        'render_modes': ['human', 'rgb_array', 'none'],
+        'render_fps': FPS,
     }
 
-    def __init__(self, n_stones: int, n_obstacles: int, render_mode: str):
+    def __init__(
+            self,
+            n_stones: int,
+            n_obstacles: int,
+            render_mode: RenderMode = 'human',
+            obs_type: ObsType = 'default'
+    ):
         self.n_stones = n_stones
         self.n_obstacles = n_obstacles
         self.render_mode = render_mode
+        self.obs_type = obs_type
+        self.should_render = self.render_mode != 'none' or self.obs_type == 'image'
 
         self._space = pymunk.Space()
         self._space.damping = DAMPING
@@ -33,6 +42,8 @@ class AlkkagiEnv(gym.Env):
         self._screen = None
         self._game_surface = None
         self._status_surface = None
+        self._board_surface = None
+        self._font = None
         self._clock = None
 
         self._slingshot = SlingShot()
@@ -47,28 +58,28 @@ class AlkkagiEnv(gym.Env):
             'black': gym.spaces.Box(
                 low=0,
                 high=max(self.width, self.height),
-                shape=(n_stones, 3),
+                shape=(self.n_stones, 3),
                 dtype=np.float32
             ),
             'white': gym.spaces.Box(
                 low=0,
                 high=max(self.width, self.height),
-                shape=(n_stones, 3),
+                shape=(self.n_stones, 3),
                 dtype=np.float32
             ),
             'obstacles': gym.spaces.Box(
                 low=0,
                 high=max(self.width, self.height),
-                shape=(n_stones, 4),
+                shape=(self.n_obstacles, 4),
                 dtype=np.float32
             )
         })
 
         self.action_space = gym.spaces.Dict({
             'turn': gym.spaces.Discrete(2),
-            'index': gym.spaces.Box(0, n_stones, shape=(1,), dtype=np.uint8),
-            'power': gym.spaces.Box(1, self.max_power, shape=(1,)),
-            'angle': gym.spaces.Box(-180, 180, shape=(1,)),
+            'index': gym.spaces.Discrete(self.n_stones),
+            'power': gym.spaces.Box(0.0, 1.0, shape=(1,), dtype=np.float32),
+            'angle': gym.spaces.Box(-1.0, 1.0, shape=(1,), dtype=np.float32),
         })
 
     @property
@@ -107,7 +118,7 @@ class AlkkagiEnv(gym.Env):
         ex, ey = sx - dx * length, sy - dy * length
         self.set_slingshot_from_pos((sx, sy), (ex, ey))
 
-    def find_stone(self, pos: Tuple[float, float]) -> Stone:
+    def find_stone(self, pos: Tuple[float, float]) -> Stone | None:
         mx, my = pos
 
         closest_stone = None
@@ -167,17 +178,22 @@ class AlkkagiEnv(gym.Env):
         self._turn = PLAYER_BLACK
         self._steps = 0
         self.set_slingshot_from_pos(None, None)
-        self.render()
+        if self.should_render:
+            self.render()
         return self._generate_obs(), self._generate_info()
 
     def step(self, action):
         turn, index, power, angle = action['turn'], action['index'], action['power'], action['angle']
+        turn = int(turn)
+        index = int(index)
+        power = float(np.asarray(power).item())
+        angle = float(np.asarray(angle).item())
 
         if turn != self._turn:
             return self._generate_obs(), 0, False, False, self._generate_info()
 
-        angle = np.clip(angle, -180, 180)
-        power = np.clip(power, 1, self.max_power)
+        angle = np.clip(angle * 180, -180.0, 180.0)
+        power = np.clip(power * MAX_POWER, MIN_POWER, MAX_POWER)
         stones = [stone for stone in self._stones if stone.player_ == self._turn and stone.active]
         selected_stone = stones[0]
 
@@ -194,28 +210,37 @@ class AlkkagiEnv(gym.Env):
         selected_stone.apply_impulse(impulse)
         self._is_stone_in_motion = True
 
+        physics_dt = 1 / self.metadata['render_fps']
+        steps_per_frame = 1
+        if self.render_mode == 'human':
+            steps_per_frame = DEMO_PHYSICS_STEPS_PER_FRAME
+
         while self._is_stone_in_motion:
-            self._space.step(1 / self.metadata['render_fps'])
+            for _ in range(steps_per_frame):
+                self._space.step(physics_dt)
 
-            stones_oob = [
-                stone
-                for stone in self._stones
-                if stone.active and
-                   (stone.position_.x < 0 or stone.position_.x > self.width
-                   or stone.position_.y < 0 or stone.position_.y > self.height)
-            ]
+                stones_oob = [
+                    stone
+                    for stone in self._stones
+                    if stone.active and
+                       (stone.position_.x < 0 or stone.position_.x > self.width
+                       or stone.position_.y < 0 or stone.position_.y > self.height)
+                ]
 
-            for stone in stones_oob:
-                self._space.remove(stone.body_, stone.shape_)
-                stone.active = False
+                for stone in stones_oob:
+                    self._space.remove(stone.body_, stone.shape_)
+                    stone.active = False
 
-            for stone in self._stones:
-                if stone.velocity_.length < VELOCITY_THRESHOLD:
-                    stone.stop()
+                for stone in self._stones:
+                    if stone.velocity_.length < VELOCITY_THRESHOLD:
+                        stone.stop()
 
-            self._is_stone_in_motion = any(
-                stone.active and stone.velocity_.length >= VELOCITY_THRESHOLD for stone in self._stones
-            )
+                self._is_stone_in_motion = any(
+                    stone.active and stone.velocity_.length >= VELOCITY_THRESHOLD for stone in self._stones
+                )
+
+                if not self._is_stone_in_motion:
+                    break
 
             if self.render_mode == 'human':
                 self.render()
@@ -227,10 +252,15 @@ class AlkkagiEnv(gym.Env):
 
         self._steps += 1
 
-        self.render()
+        if self.should_render:
+            self.render()
+
         return self._generate_obs(), 0, terminated, False, self._generate_info()
 
     def render(self,):
+        if not self.should_render:
+            return None
+
         screen_width, screen_height = self.width, self.height + STATUS_HEIGHT
         if self._screen is None:
             pygame.init()
@@ -243,17 +273,24 @@ class AlkkagiEnv(gym.Env):
 
             self._game_surface = self._screen.subsurface((0, 0, self.width, self.height))
             self._status_surface = self._screen.subsurface((0, self.height, screen_width, STATUS_HEIGHT))
+            self._board_surface = pygame.Surface((self.width, self.height))
+            self._draw_go_board(self._board_surface)
 
         if self._clock is None:
             self._clock = pygame.time.Clock()
 
-        self._draw_go_board(self._game_surface)
+        if self._font is None:
+            self._font = pygame.font.SysFont(None, 24)
+
+        assert self._game_surface is not None
+
+        self._game_surface.blit(self._board_surface, (0, 0))
 
         for obstacle in self._obstacles:
             obstacle.draw(self._game_surface)
 
         for stone in self._stones:
-            stone.draw(self._game_surface)
+            stone.draw(self._game_surface, self._font)
 
         self._slingshot.draw(self._game_surface)
 
@@ -290,7 +327,7 @@ class AlkkagiEnv(gym.Env):
 
         if self.render_mode == 'human':
             pygame.event.pump()
-            self._clock.tick(self.metadata['render_fps'])
+            self._clock.tick(FPS)
             pygame.display.flip()
             return None
         else:
@@ -299,6 +336,8 @@ class AlkkagiEnv(gym.Env):
             )
 
     def get_frame(self):
+        assert self._game_surface is not None, "Game surface not initialized"
+
         return np.transpose(
             np.array(pygame.surfarray.pixels3d(self._game_surface)), axes=(1, 0, 2)
         )
@@ -365,7 +404,7 @@ class AlkkagiEnv(gym.Env):
             text: str,
             text_color: Tuple[int, int, int],
             fill: Tuple[int, int, int],
-            stroke: Tuple[int, int, int] = None
+            stroke: Tuple[int, int, int] | None = None
     ):
         self._status_surface.fill(Color.WHITE)
 
@@ -375,7 +414,9 @@ class AlkkagiEnv(gym.Env):
         if stroke:
             pygame.draw.circle(self._status_surface, stroke, rect.center, 10, 1)  # Black outline
 
-        font = pygame.font.SysFont(None, 24)
-        text = font.render(text, True, text_color)
+        if self._font is None:
+            self._font = pygame.font.SysFont(None, 24)
+
+        text = self._font.render(text, True, text_color)
         self._status_surface.blit(text, (rect.right + 10, rect.centery - 8))
 

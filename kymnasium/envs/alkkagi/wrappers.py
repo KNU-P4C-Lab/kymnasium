@@ -6,9 +6,9 @@ import pygame.math
 import math
 from .objs import SlingShot
 from .env import AlkkagiEnv
-from kymnasium.common.evaluate import RemoteEnvWrapper
-from kymnasium.common.agent import Agent
-from kymnasium.common.manual import ManualPlayWrapper
+from ...common.evaluate import RemoteEnvWrapper
+from ...common.agent import Agent
+from ...common.manual import ManualPlayWrapper
 
 
 class AlkkagiManualPlayWrapper(ManualPlayWrapper):
@@ -39,12 +39,14 @@ class AlkkagiManualPlayWrapper(ManualPlayWrapper):
                     self._pos_start = self._selected_stone.position_
                     self._pos_end = mouse_pos
         elif event.type == pygame.MOUSEBUTTONUP and event.button == 1 and self._is_dragging:
+            assert self._selected_stone is not None
+
             sx, sy = self._pos_start
             ex, ey = self._pos_end
             dx, dy = sx - ex, sy - ey
-            angle = pygame.math.Vector2(1, 0).angle_to(pygame.math.Vector2(dx, dy))
+            angle = pygame.math.Vector2(1, 0).angle_to(pygame.math.Vector2(dx, dy)) / 180.0
             distance = math.hypot(dx, dy)
-            power = min(distance * env.max_power / SlingShot.POWER_LINE_LENGTH, env.max_power)
+            power = min(distance / SlingShot.POWER_LINE_LENGTH, 1.0)
             action = {
                 'turn': env.turn_,
                 'angle': angle,
@@ -60,7 +62,6 @@ class AlkkagiManualPlayWrapper(ManualPlayWrapper):
             self._pos_end = pygame.mouse.get_pos()
 
         env.set_slingshot_from_pos(self._pos_start, self._pos_end)
-
         return None
 
 

@@ -28,7 +28,7 @@ __all__ = [
 
 os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 
-__version__ = "1.2.5"
+__version__ = "1.2.6"
 
 
 
@@ -293,7 +293,7 @@ gym.register(
     entry_point='kymnasium.envs.bullet_bill.registration:_create_env',
     disable_env_checker=True,
     kwargs=dict(
-        game_duration=120,
+        game_duration=180,
         init_spawn_interval=1.5,
         min_spawn_interval=0.5,
         max_spawns=30,
@@ -307,7 +307,7 @@ gym.register(
     entry_point='kymnasium.envs.bullet_bill.registration:_create_env',
     disable_env_checker=True,
     kwargs=dict(
-        game_duration=120,
+        game_duration=180,
         init_spawn_interval=1.5,
         min_spawn_interval=0.3,
         max_spawns=30,
@@ -321,7 +321,7 @@ gym.register(
     entry_point='kymnasium.envs.bullet_bill.registration:_create_env',
     disable_env_checker=True,
     kwargs=dict(
-        game_duration=120,
+        game_duration=180,
         init_spawn_interval=1.5,
         min_spawn_interval=0.1,
         max_spawns=30,
@@ -335,7 +335,7 @@ gym.register(
     entry_point='kymnasium.envs.bullet_bill.registration:_create_env',
     disable_env_checker=True,
     kwargs=dict(
-        game_duration=120,
+        game_duration=180,
         init_spawn_interval=1.5,
         min_spawn_interval=0.5,
         max_spawns=30,
@@ -349,7 +349,7 @@ gym.register(
     entry_point='kymnasium.envs.bullet_bill.registration:_create_env',
     disable_env_checker=True,
     kwargs=dict(
-        game_duration=120,
+        game_duration=180,
         init_spawn_interval=1.5,
         min_spawn_interval=0.3,
         max_spawns=30,
@@ -363,7 +363,7 @@ gym.register(
     entry_point='kymnasium.envs.bullet_bill.registration:_create_env',
     disable_env_checker=True,
     kwargs=dict(
-        game_duration=120,
+        game_duration=180,
         init_spawn_interval=1.5,
         min_spawn_interval=0.1,
         max_spawns=30,
